@@ -1,5 +1,5 @@
 // オフラインでも起動できるように、アプリ本体とAI用ライブラリ（同梱）をキャッシュする
-const CACHE = 'dsm-v2';
+const CACHE = 'dsm-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './vendor/anthropic-sdk-1.5.0.mjs'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
