@@ -44,11 +44,14 @@ button.on{background:linear-gradient(135deg,var(--ok),var(--ok2))}
 .pfc{display:flex;height:8px;border-radius:99px;overflow:hidden;margin:6px 0}.pfc i{display:block}
 .adv{background:color-mix(in srgb,var(--b) 12%,transparent);border-left:3px solid var(--b);border-radius:10px;padding:8px 10px;margin:6px 0;font-size:14px}
 dialog{max-height:92vh;overflow:auto}
+.quote{margin-top:12px;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--b) 10%,transparent);border-left:4px solid var(--b)}.quote .qt{font-size:21px;font-weight:700;line-height:1.5;margin:2px 0}
+#md h2:focus{outline:none}
+.g2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.g2 input,.g2 select{width:100%;box-sizing:border-box;min-width:0}
 input,select,textarea{font-size:16px}
 </style></head><body><div class="w">
 <header><h1>毎日の自己管理</h1><div><input type="date" id="dt" onchange="setD(this.value)"> <button class="s" onclick="setD(jd())">今日</button></div></header>
 <div class="card" id="top"></div><div class="card" id="prog"></div><div class="card" id="ins"></div>
-<nav><a href="#meal">食事</a><a href="#sup">サプリ</a><a href="#wt">体重</a><a href="#todo">通知</a><a href="#trn">筋トレ</a><a href="#read">読書</a></nav>
+<nav><a href="#meal">食事</a><a href="#sup">サプリ</a><a href="#wt">体重</a><a href="#trn">筋トレ</a><a href="#read">読書</a></nav>
 <div class="cols"><div id="L"></div><div id="R"></div></div>
 <div class="card m" id="foot"></div>
 <details class="card" id="appset"><summary><b>アプリ設定（AI・バックアップ）</b></summary>
@@ -65,9 +68,9 @@ input,select,textarea{font-size:16px}
 </details>
 <div style="text-align:center;margin:16px 0"><button onclick="review()">1週間を振り返る</button></div>
 </div>
-<dialog id="md"><h2>食事を記録</h2>
-<label>種類<select id="m_type" onchange="preset()"><option value="normal">写真・手入力</option><option value="dinner">会食</option><option value="pro">プロテイン（P 20 g）</option><option value="yog">ヨーグルト（P 10 g）</option><option value="chk">茹でた胸肉（P 20 g）</option></select></label>
+<dialog id="md"><h2 tabindex="-1" autofocus>食事を記録</h2>
 <div class="adv"><label>📷 食事の写真（最大5枚）<input type="file" accept="image/*" multiple onchange="addPh(this)"></label><div id="m_ph" class="row" style="border:0"></div><button class="s" onclick="analyze()">✨ 栄養を分析（推定し直す）</button><div class="m" id="m_st"></div><div id="m_an"></div></div>
+<label>種類<select id="m_type" onchange="preset()"><option value="normal">写真・手入力</option><option value="dinner">会食</option><option value="pro">プロテイン（P 20 g）</option><option value="yog">ヨーグルト（P 10 g）</option><option value="chk">茹でた胸肉（P 20 g）</option></select></label>
 <label>メニュー名<input id="m_name"></label>
 <div class="g2"><label>時刻<input type="time" id="m_time"></label><label>kcal<input type="number" id="m_kcal" min="0" inputmode="decimal"></label>
 <label>P (g)<input type="number" id="m_p" min="0" inputmode="decimal"></label><label>F (g)<input type="number" id="m_f" min="0" inputmode="decimal"></label>
@@ -99,10 +102,10 @@ function sleep(d){const x=day(d),b=tm(x.bed||'00:00'),wr=tm(x.wake),w=wr??tm(x.w
 const alc=d=>{const x=day(d);return x.alc!==undefined?x.alc:(x.meals||[]).some(m=>m.type==='dinner'&&m.alc==='yes')};
 const QS=[['千里の道も一歩から','老子『道徳経』'],['過ぎたるは猶及ばざるが如し','『論語』先進篇'],['天は自ら助くる者を助く','S・スマイルズ『自助論』']];
 function setD(v){if(v){D=v;render()}}
-function render(){GOAL=+S.set.goal>0?+S.set.goal:85;
+function render(){GOAL=+S.set.goal>0?+S.set.goal:85;const opn=[...document.querySelectorAll('details[id]')].filter(d=>d.open).map(d=>d.id);needR=false;
  $('#dt').value=D;const lw=lastW(D),x=day(D),q=QS[Math.floor(new Date(T0+'T00:00:00Z')/864e5)%3];
  let g='体重の記録がありません。体重を記録しましょう。';if(lw){const d=S.days[lw].w-GOAL;g=`<span class="big">${d>0?'あと '+f1(d)+' kg':d===0?'目標達成':'目標より '+f1(-d)+' kg下'}</span><br><span class="m">${lw}の体重 ${f1(S.days[lw].w)} kg ／ 目標 ${GOAL} kg</span>`}
- prog();insR();$('#top').innerHTML=g+`<div class="m" style="margin-top:6px">今日の格言：${q[0]}（${q[1]}）</div>`;
+ prog();insR();$('#top').innerHTML=g+`<div class="quote"><div class="m">📜 今日の格言</div><div class="qt">${q[0]}</div><div class="m">— ${q[1]}</div></div>`;
  // meals
  const ms=(x.meals||[]).slice().sort((a,b)=>(a.time?0:1)-(b.time?0:1)||(a.time||'').localeCompare(b.time||'')),t=tot(D),st=S.set;let mh='',last='#';
  ms.forEach(m=>{const h=m.time||'時刻不明';if(h!==last){mh+=`<div class="m" style="margin-top:6px"><b>${h}</b></div>`;last=h}
@@ -116,13 +119,9 @@ function render(){GOAL=+S.set.goal>0?+S.set.goal:85;
  <div class="card" id="sup"><h2>サプリ <span class="m">${sc} / 2 回</span></h2><label class="chk"><input type="checkbox" ${x.sm?'checked':''} onchange="tg('sm',this.checked)">朝のサプリ</label><label class="chk"><input type="checkbox" ${x.sn?'checked':''} onchange="tg('sn',this.checked)">夜のサプリ</label></div>
  <div class="card" id="wt">${wtCard()}</div>`;
  // right
- const td=S.todo[D]||[];
- $('#R').innerHTML=`<div class="card" id="todo"><h2>通知・チェック項目</h2><div class="m">朝の通知の自動取り込みはこの版では未対応です。自分で追加した項目を管理できます。</div>
- ${td.map(i=>`<div class="row"><label class="chk" style="flex:1"><input type="checkbox" ${i.d?'checked':''} onchange="tdT('${i.id}')">${E(i.t)}</label><button class="s" onclick="tdD('${i.id}')">削除</button></div>`).join('')}
- <div class="row"><input id="ti" maxlength="120" placeholder="項目を追加（120文字まで）" style="flex:1"><button onclick="tdA()">追加</button></div></div>
- <div class="card" id="trn">${trn()}</div>
+ $('#R').innerHTML=`<div class="card" id="trn">${trn()}</div>
  <div class="card" id="read"><h2>読書</h2><label class="chk"><input type="checkbox" ${x.read?'checked':''} onchange="tg('read',this.checked)">読書完了 <span class="m">目安：1日30分</span></label></div>`;
- $('#foot').innerHTML=`${msg?`<div class="err">${msg}</div>`:''}日次記録はこのiPhone内に保存されます。端末を変えると表示されないため、「アプリ設定」からバックアップを書き出せます。<br>iPhone：Safariの共有ボタン →「ホーム画面に追加」で追加できます。<br>食事写真は縮小した小さな画像として保存されます。`;document.querySelectorAll('.chk:not(.nf)').forEach(l=>l.classList.toggle('d',l.querySelector('input').checked))}
+ $('#foot').innerHTML=`${msg?`<div class="err">${msg}</div>`:''}日次記録はこのiPhone内に保存されます。端末を変えると表示されないため、「アプリ設定」からバックアップを書き出せます。<br>iPhone：Safariの共有ボタン →「ホーム画面に追加」で追加できます。<br>食事写真は縮小した小さな画像として保存されます。`;document.querySelectorAll('.chk:not(.nf)').forEach(l=>l.classList.toggle('d',l.querySelector('input').checked));opn.forEach(id=>{const d=document.getElementById(id);if(d)d.open=true})}
 function tg(k,v){day(D)[k]=v;save();render()}
 function wtCard(){const x=day(D),lw=lastW(D),w=S.days[lw]||{},sel=x.w>0;let h='<h2>体重・体調・カロリー</h2><button onclick="openW()">＋ 体重を記録</button>';
  if(lw){const prev=wds().filter(k=>k<lw).pop(),av=avg('w',D);
@@ -133,19 +132,22 @@ function wtCard(){const x=day(D),lw=lastW(D),w=S.days[lw]||{},sel=x.w>0;let h='<
   const pv=S.days[ad(D,-1)]||{};const nt=[];if((pv.meals||[]).some(m=>m.type==='dinner'))nt.push('前日は会食あり');if(alc(ad(D,-1)))nt.push('前日は飲酒あり');if((x.train||[]).some(t=>t.p==='ゴルフ'&&t.done))nt.push('当日はゴルフ');if(nt.length)h+='<br><span class="m">'+nt.join('・')+'</span>';h+='</div>'+chart()}
  else h+='<div class="m">体重が未記録です。</div>';
  h+=`<div style="margin-top:10px"><b>朝の体調</b><div class="row" style="border:0">${['すっきり','いつもどおり','疲れが残る'].map(c=>`<button class="${x.cond===c?'on':'s'}" onclick="cond('${c}')">${x.cond===c?'✓ ':''}${c}</button>`).join('')}</div>${x.cond?'':'<span class="m">未記録</span>'}</div>`;
- const sl=sleep(D);h+=`<details style="margin-top:8px"><summary>睡眠の目安：${sl.bad?'入力を見直してください':sl.t}</summary><div class="g2"><label>就寝<input type="time" value="${x.bed||'00:00'}" onchange="sv('bed',this.value)"></label><label>起床<input type="time" value="${x.wake||''}" onchange="sv('wake',this.value)"></label></div><label>メモ<input value="${E(x.note)}" onchange="sv('note',this.value)" style="width:100%;box-sizing:border-box"></label></details>`;
+ const sl=sleep(D);h+=`<details id="slD" style="margin-top:8px"><summary>睡眠の目安：${sl.bad?'入力を見直してください':sl.t}</summary><div class="g2"><label>就寝<input type="time" value="${x.bed||'00:00'}" onchange="sv('bed',this.value)"></label><label>起床<input type="time" value="${x.wake||''}" onchange="sv('wake',this.value)"></label></div><label>メモ<input value="${E(x.note)}" onchange="sv('note',this.value)" style="width:100%;box-sizing:border-box"></label></details>`;
  h+=cal();return h}
 const sv=(k,v)=>{day(D)[k]=v;save();render()},cond=c=>{const x=day(D);x.cond=x.cond===c?'':c;save();render()};
 function chart(){const p=[];for(let i=13;i>=0;i--){const d=ad(D,-i),w=S.days[d]?.w;if(w>0)p.push([13-i,+w])}if(!p.length)return'';const v=p.map(a=>a[1]),mn=Math.min(...v)-.3,mx=Math.max(...v)+.3,X=i=>10+i*280/13,Y=y=>90-(y-mn)/(mx-mn)*80;
  return`<svg viewBox="0 0 300 110" style="width:100%;max-width:100%;margin-top:8px" role="img" aria-label="14日間の体重推移"><polyline fill="none" stroke="var(--b)" stroke-width="2" points="${p.map(a=>X(a[0])+','+Y(a[1])).join(' ')}"/>${p.map(a=>`<circle cx="${X(a[0])}" cy="${Y(a[1])}" r="3" fill="var(--b)"/>`).join('')}<text x="2" y="106" font-size="9" fill="var(--m)">${ad(D,-13).slice(5)}</text><text x="270" y="106" font-size="9" fill="var(--m)">${D.slice(5)}</text><text x="2" y="9" font-size="9" fill="var(--m)">${f1(mx,1)}</text><text x="2" y="98" font-size="9" fill="var(--m)">${f1(mn,1)}</text></svg>`}
-function cal(){const s=S.set,lw=lastW(D),t=tot(D);let r='',why='';const age=s.birth?Math.floor(df(D,s.birth)/365.2425):null;
+function calT(){const s=S.set,lw=lastW(D),t=tot(D);let r='',why='';const age=s.birth?Math.floor(df(D,s.birth)/365.2425):null;
  let tdee=null;if(lw&&s.h&&age!=null&&s.sex){const b=10*S.days[lw].w+6.25*s.h-5*age+(s.sex==='m'?5:-161);tdee=Math.round(b*1.2);r=`推定消費 ${tdee} kcal（安静時 ${Math.round(b)} ＋ 日常活動 ${tdee-Math.round(b)}、体重 ${f1(S.days[lw].w)} kg・${lw}）`}else why='設定または体重が未入力のため推定消費を計算できません';
  const ms=(day(D).meals||[]);let diff='—';if(!ms.length)why=why||'摂取が未記録です';else if(t.dn)why=why||'会食を含む日は差を表示しません';else if(ms.some(m=>m.type!=='dinner'&&(m.kcal===''||m.kcal==null)))why=why||'カロリー不明の食事があります';else if(tdee)diff=(t.kcal-tdee>=0?'+':'')+(t.kcal-tdee)+' kcal';
- return`<div style="margin-top:10px"><b>カロリー収支</b><br>摂取 ${t.kcal??'—'} ／ ${r||'推定消費 —'}<br>差（摂取−消費）：${diff} <span class="m">${diff==='—'?why:''}</span></div>
- <details style="margin-top:6px"><summary>設定（身長・生年月日・目標）</summary><div class="g2"><label>目標体重 kg<input type="number" step="0.1" min="1" inputmode="decimal" value="${s.goal||GOAL}" onchange="ss('goal',this.value)"></label><label>身長 cm<input type="number" value="${s.h||''}" onchange="ss('h',this.value)"></label><label>生年月日<input type="date" value="${s.birth||''}" onchange="ss('birth',this.value)"></label>
+ return{h:`<div style="margin-top:10px"><b>カロリー収支</b><br>摂取 ${t.kcal??'—'} ／ ${r||'推定消費 —'}<br>差（摂取−消費）：${diff} <span class="m">${diff==='—'?why:''}</span></div>`,s}}
+function cal(){const{h,s}=calT();return`<div id="calTxt">${h}</div>
+ <details id="setD" style="margin-top:6px" ontoggle="if(!this.open&&needR)render()"><summary>設定（身長・生年月日・目標）</summary><div class="g2"><label>目標体重 kg<input type="number" step="0.1" min="1" inputmode="decimal" value="${s.goal||GOAL}" onchange="ss('goal',this.value)"></label><label>身長 cm<input type="number" value="${s.h||''}" onchange="ss('h',this.value)"></label><label>生年月日<input type="date" value="${s.birth||''}" onchange="ss('birth',this.value)"></label>
  <label>区分<select onchange="ss('sex',this.value)"><option value="">未設定</option><option value="m" ${s.sex==='m'?'selected':''}>男性（+5）</option><option value="f" ${s.sex==='f'?'selected':''}>女性（−161）</option></select></label>
  ${[['kcal','kcal'],['p','P'],['f','F'],['c','C']].map(k=>`<label>目標 ${k[1]}<input type="number" value="${s['g'+k[0]]||''}" onchange="ss('g${k[0]}',this.value)"></label>`).join('')}</div></details>`}
-const ss=(k,v)=>{S.set[k]=v;save();render()};
+let needR=false;
+const ss=(k,v)=>{S.set[k]=v;save();GOAL=+S.set.goal>0?+S.set.goal:85;needR=true;const c=$('#calTxt');if(c)c.innerHTML=calT().h;topR()};
+function topR(){const lw=lastW(D),t=$('#top .big'),m=$('#top .big+br+.m');if(!lw||!t||!m)return;const d=S.days[lw].w-GOAL;t.textContent=d>0?'あと '+f1(d)+' kg':d===0?'目標達成':'目標より '+f1(-d)+' kg下';m.textContent=`${lw}の体重 ${f1(S.days[lw].w)} kg ／ 目標 ${GOAL} kg`}
 // training
 const PARTS=['脚・お尻','胸','背中','肩','腕','ゴルフ'];
 function trn(){const x=day(D),tr=x.train||[],ex=[ad(D,-1),ad(D,-2)].flatMap(d=>(S.days[d]?.train||[]).filter(t=>t.done).map(t=>t.p)),ls=p=>{for(let i=1;i<60;i++)if((S.days[ad(D,-i)]?.train||[]).some(t=>t.p===p&&t.done))return i;return 99};
@@ -241,7 +243,7 @@ async function dayRev(){const s=await getSam(),x=day(D),t=tot(D);if(!s){alert('A
  const ms=(x.meals||[]).map(m=>`${m.time||'時刻不明'} ${m.name} ${m.kcal||'?'}kcal P${m.p||'?'} F${m.f||'?'} C${m.c||'?'}${m.type==='dinner'?'(会食)':''}`).join('\n');if(!ms){alert('先に食事を記録してください');return}
  const el=$('#rev');el.style.display='block';el.textContent='分析中…';
  try{const r=await s(`あなたはプロのパーソナルトレーナー兼管理栄養士です。利用者（目標体重${GOAL}kg・筋肉量を維持して減量）の1日の食事を、数値（kcal・P/F/C・バランス）を根拠に、良い点・改善点・明日の具体策の順で日本語200字程度で評価してください。数値は推定です。\n設定:${JSON.stringify(S.set)}\n合計(会食除く):${JSON.stringify(t)}\n食事:\n${ms}`,{cache:false});x.rev=r.text.trim();save();render()}catch(e){el.textContent='取得に失敗しました。時間をおいて再試行してください。'}}
-function prog(){const x=day(D),td=S.todo[D]||[],it=[['朝サプリ',x.sm],['夜サプリ',x.sn],['体重',x.w>0],['食事',(x.meals||[]).length>0],['筋トレ',(x.train||[]).some(t=>t.done)],['読書',x.read],...td.map(i=>[i.t,i.d])],n=it.filter(a=>a[1]).length;
+function prog(){const x=day(D),it=[['朝サプリ',x.sm],['夜サプリ',x.sn],['体重',x.w>0],['食事',(x.meals||[]).length>0],['筋トレ',(x.train||[]).some(t=>t.done)],['読書',x.read]],n=it.filter(a=>a[1]).length;
  $('#prog').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><b>本日のタスク</b><span class="big">${n} / ${it.length}</span></div><div class="bar"><i style="width:${Math.round(n/it.length*100)}%"></i></div><div class="m">${n===it.length?'🎉 本日のタスクをすべて完了しました！':it.map(a=>(a[1]?'✔ ':'○ ')+E(a[0])).join('　')}</div>`}
 const TIPS=[['栄養','たんぱく質は1食20〜40 gを目安に毎食へ分けると、筋肉量の維持に役立ちます。'],['睡眠','寝る1時間前から画面の明るさを落とすと、寝つきが楽になりやすくなります。'],['習慣','新しい習慣は、既にある習慣の直後に置く（歯磨きの後に読書など）と続きやすくなります。'],['トレーニング','同じ部位は48時間ほど空けて回復させると、質の高い練習を続けやすくなります。'],['経営の視点','重要な仕事は集中できる午前に先に置き、連絡や会議は後ろにまとめましょう。'],['水分','のどが渇く前にこまめに水を飲む。飲酒日は同量の水を添えると翌朝が楽になります。'],['体重','体重は日々1〜2 kg前後動くことがあります。1回の数字より7日平均の傾向を見ましょう。']];
 function insR(){const i=S.ins&&S.ins.d===T0?S.ins:{c:TIPS[Math.floor(new Date(T0+'T00:00:00Z')/864e5)%7][0],t:TIPS[Math.floor(new Date(T0+'T00:00:00Z')/864e5)%7][1]};
