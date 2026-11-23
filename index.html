@@ -1,0 +1,255 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>毎日の自己管理</title>
+<meta name="theme-color" content="#4f46e5"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="自己管理"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#eef4fb;--c:#fff;--t:#1d2b3a;--m:#5b6b7d;--b:#2563eb;--l:#d6e2f2;--r:#c0262d;--ok:#157347;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1722;--c:#192434;--t:#e6edf5;--m:#9fb0c3;--b:#5b93f5;--l:#2b3b52;--r:#ff7b80;--ok:#5fd09a}}
+:root[data-theme="dark"]{--bg:#0f1722;--c:#192434;--t:#e6edf5;--m:#9fb0c3;--b:#5b93f5;--l:#2b3b52;--r:#ff7b80;--ok:#5fd09a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--t);font:15px/1.6 -apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.w{max-width:1000px;margin:0 auto;padding:12px}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+h1{font-size:20px;margin:0}h2{font-size:16px;margin:0 0 8px}
+.card{background:var(--c);border:1px solid var(--l);border-radius:12px;padding:14px;margin:12px 0}
+.cols{display:grid;grid-template-columns:1fr;gap:0 14px}
+@media(min-width:800px){.cols{grid-template-columns:1fr 1fr;align-items:start}}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:var(--b);color:#fff;border:0;border-radius:10px;padding:10px 14px;min-height:44px;cursor:pointer}
+button.s{background:transparent;color:var(--b);border:1px solid var(--b);min-height:40px;padding:6px 10px}
+button.on{background:var(--ok)}
+input,select,textarea{background:var(--c);border:1px solid var(--l);border-radius:8px;padding:8px;min-height:40px;max-width:100%}
+.m{color:var(--m);font-size:13px}.big{font-size:22px;font-weight:700}.err{color:var(--r)}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 0;border-top:1px solid var(--l)}
+.chk{display:flex;gap:10px;align-items:center;min-height:44px}.chk input{width:24px;height:24px}
+nav a{display:inline-block;margin:2px 8px 2px 0;color:var(--b)}
+dialog{border:1px solid var(--l);border-radius:12px;background:var(--c);color:var(--t);max-width:min(480px,94vw)}
+dialog label{display:block;margin:6px 0}dialog input,dialog select{width:100%;box-sizing:border-box}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+:root{--bg:#f2f4fb;--c:#fff;--t:#141a2e;--m:#667089;--b:#4f46e5;--a2:#06b6d4;--l:#e1e5f2;--ok:#059669;--ok2:#10b981}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a0f1e;--c:#121a30;--t:#e8ecf8;--m:#93a0bf;--b:#7c8cff;--a2:#38e1ff;--l:#243051;--ok:#10b981;--ok2:#34d399}}
+:root[data-theme="dark"]{--bg:#0a0f1e;--c:#121a30;--t:#e8ecf8;--m:#93a0bf;--b:#7c8cff;--a2:#38e1ff;--l:#243051;--ok:#10b981;--ok2:#34d399}
+body{background:radial-gradient(900px 500px at 8% -8%,color-mix(in srgb,var(--b) 22%,transparent),transparent),radial-gradient(700px 400px at 100% 0,color-mix(in srgb,var(--a2) 16%,transparent),transparent),var(--bg);background-attachment:fixed}
+h1{font-size:24px;letter-spacing:.04em;background:linear-gradient(90deg,var(--b),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:15px;letter-spacing:.06em}
+.card{border-radius:20px;box-shadow:0 10px 30px rgba(8,12,30,.18);border-color:color-mix(in srgb,var(--b) 18%,var(--l))}
+button{background:linear-gradient(135deg,var(--b),var(--a2));border-radius:14px;font-weight:600;box-shadow:0 4px 14px color-mix(in srgb,var(--b) 35%,transparent)}
+button.s{background:transparent;box-shadow:none;color:var(--b);border:1px solid color-mix(in srgb,var(--b) 55%,transparent)}
+button.on{background:linear-gradient(135deg,var(--ok),var(--ok2))}
+.big{font-size:26px;background:linear-gradient(90deg,var(--t),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.chk{padding:6px 12px;border-radius:14px;border:1px solid var(--l);margin:6px 0;transition:.25s}
+.chk input{appearance:none;-webkit-appearance:none;width:26px;height:26px;border:2px solid var(--m);border-radius:9px;display:grid;place-content:center;margin:0;flex:none}
+.chk.d{background:linear-gradient(135deg,var(--ok),var(--ok2));color:#fff;border-color:transparent;text-decoration:line-through;text-decoration-thickness:1.5px}
+.chk.d .m{color:#ffffffd9}.chk.d input{background:#fff;border-color:#fff}
+.chk input:checked::after{content:"✓";color:var(--ok);font-weight:900;font-size:16px}
+.bar{height:10px;border-radius:99px;background:var(--l);overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--b),var(--ok2));transition:width .4s}
+.pfc{display:flex;height:8px;border-radius:99px;overflow:hidden;margin:6px 0}.pfc i{display:block}
+.adv{background:color-mix(in srgb,var(--b) 12%,transparent);border-left:3px solid var(--b);border-radius:10px;padding:8px 10px;margin:6px 0;font-size:14px}
+dialog{max-height:92vh;overflow:auto}
+input,select,textarea{font-size:16px}
+</style></head><body><div class="w">
+<header><h1>毎日の自己管理</h1><div><input type="date" id="dt" onchange="setD(this.value)"> <button class="s" onclick="setD(jd())">今日</button></div></header>
+<div class="card" id="top"></div><div class="card" id="prog"></div><div class="card" id="ins"></div>
+<nav><a href="#meal">食事</a><a href="#sup">サプリ</a><a href="#wt">体重</a><a href="#todo">通知</a><a href="#trn">筋トレ</a><a href="#read">読書</a></nav>
+<div class="cols"><div id="L"></div><div id="R"></div></div>
+<div class="card m" id="foot"></div>
+<details class="card" id="appset"><summary><b>アプリ設定（AI・バックアップ）</b></summary>
+<div style="margin-top:8px"><b>AI機能（Claude API）</b><div class="m">写真の栄養分析・体重画面の読み取り・トレーナーの総評・今日の気づきに使います。APIキーはこのiPhone内にだけ保存され、AnthropicのAPIへの送信にのみ使います。利用量に応じて料金がかかります。</div>
+<label>APIキー<input type="password" id="k_key" autocomplete="off" placeholder="sk-ant-..." style="width:100%;box-sizing:border-box"></label>
+<label>モデル<select id="k_model" style="width:100%;box-sizing:border-box"><option value="claude-opus-5-5">Claude Opus 5.5（高精度）</option><option value="claude-sonnet-5-5">Claude Sonnet 5.5（標準）</option><option value="claude-haiku-5-5">Claude Haiku 5.5（低コスト）</option></select></label>
+<div class="row" style="border:0"><button onclick="saveKey()">保存</button><button class="s" onclick="testKey()">接続テスト</button><button class="s" onclick="delKey()">キーを削除</button></div><div class="m" id="k_st"></div></div>
+<div style="margin-top:12px"><b>バックアップ</b><div class="m">記録はこのiPhone内に保存されます。機種変更やデータ消失に備えて、定期的に書き出してください（APIキーは含みません）。</div>
+<div class="row" style="border:0"><button class="s" onclick="expData()">書き出す（JSON）</button><label class="s" style="display:inline-flex;align-items:center;min-height:40px;padding:6px 10px;border:1px solid var(--b);border-radius:14px;color:var(--b);cursor:pointer">読み込む<input type="file" accept="application/json,.json" onchange="impData(this)" style="display:none"></label></div><div class="m" id="b_st"></div></div>
+</details>
+<div style="text-align:center;margin:16px 0"><button onclick="review()">1週間を振り返る</button></div>
+</div>
+<dialog id="md"><h2>食事を記録</h2>
+<label>種類<select id="m_type" onchange="preset()"><option value="normal">写真・手入力</option><option value="dinner">会食</option><option value="pro">プロテイン（P 20 g）</option><option value="yog">ヨーグルト（P 10 g）</option><option value="chk">茹でた胸肉（P 20 g）</option></select></label>
+<div class="adv"><label>📷 食事の写真（最大5枚）<input type="file" accept="image/*" multiple onchange="addPh(this)"></label><div id="m_ph" class="row" style="border:0"></div><button class="s" onclick="analyze()">✨ 栄養を分析（推定し直す）</button><div class="m" id="m_st"></div><div id="m_an"></div></div>
+<label>メニュー名<input id="m_name"></label>
+<div class="g2"><label>時刻<input type="time" id="m_time"></label><label>kcal<input type="number" id="m_kcal" min="0" inputmode="decimal"></label>
+<label>P (g)<input type="number" id="m_p" min="0" inputmode="decimal"></label><label>F (g)<input type="number" id="m_f" min="0" inputmode="decimal"></label>
+<label>C (g)<input type="number" id="m_c" min="0" inputmode="decimal"></label><label>飲酒（会食）<select id="m_alc"><option value="">未入力</option><option value="yes">飲酒あり</option><option value="no">飲酒なし</option></select></label></div>
+<label>メモ・量の補足（食べた量/残した量など）<input id="m_memo"></label><div class="err" id="m_err"></div>
+<div class="row" style="border:0"><button onclick="saveM()">保存</button><button class="s" onclick="md.close()">閉じる</button></div></dialog>
+<dialog id="wd"><h2>体重を記録</h2>
+<div class="adv"><label>📷 オムロン コネクトのスクリーンショット<input type="file" accept="image/*" onchange="readW(this)"></label><div class="m" id="w_st">選ぶと体重・測定日時・体組成を読み取って入力欄に入れます。保存前に必ず確認してください。</div></div>
+<div class="g2"><label>体重 (kg)<input type="number" step="0.01" id="w_w" inputmode="decimal"></label><label>測定日<input type="date" id="w_d"></label>
+<label>測定時刻（任意）<input type="time" id="w_t"></label><label>骨格筋量 (kg)<input type="number" step="0.01" id="w_sm"></label>
+<label>骨格筋率 (%)<input type="number" step="0.1" id="w_sr"></label><label>体脂肪量 (kg)<input type="number" step="0.01" id="w_fm"></label>
+<label>体脂肪率 (%)<input type="number" step="0.1" id="w_fr"></label></div><div class="err" id="w_err"></div>
+<div class="row" style="border:0"><button onclick="saveW()">保存</button><button class="s" onclick="wd.close()">閉じる</button></div></dialog>
+<dialog id="rd"><div id="rb"></div><button class="s" onclick="rd.close()">閉じる</button></dialog>
+<script>
+const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const jd=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Tokyo'}),jt=()=>new Date().toLocaleTimeString('en-GB',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'});
+const ad=(s,n)=>{const d=new Date(s+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+const df=(a,b)=>Math.round((new Date(a)-new Date(b))/864e5),f1=(n,d=2)=>n==null?'—':(+n).toFixed(d);
+let S={days:{},set:{},todo:{}};try{S=Object.assign(S,JSON.parse(localStorage.getItem('dsm1')||'{}'))}catch(e){}
+let D=jd(),T0=D,msg='',MD=D,EID=null;let GOAL=85;
+const save=()=>{try{localStorage.setItem('dsm1',JSON.stringify(S));msg=''}catch(e){msg='保存に失敗しました。容量などを確認してください。'}};
+const day=d=>S.days[d]||(S.days[d]={});
+const wds=()=>Object.keys(S.days).filter(k=>S.days[k].w>0).sort(),lastW=d=>wds().filter(k=>k<=d).pop()||null;
+const avg=(f,end,n=7)=>{const v=[];for(let i=0;i<n;i++){const x=S.days[ad(end,-i)];if(x&&x[f]>0)v.push(+x[f])}return{n:v.length,a:v.length?v.reduce((a,b)=>a+b)/v.length:null}};
+const tot=d=>{const all=day(d).meals||[],m=all.filter(x=>x.type!=='dinner'),r={dn:all.length-m.length};['kcal','p','f','c'].forEach(k=>{const v=m.filter(x=>x[k]!==''&&x[k]!=null).map(Number);r[k]=v.length?v.reduce((a,b)=>a+b):null});return r};
+const tm=s=>{const m=/^(\d+):(\d+)/.exec(s||'');return m?+m[1]*60+ +m[2]:null};
+function sleep(d){const x=day(d),b=tm(x.bed||'00:00'),wr=tm(x.wake),w=wr??tm(x.wt);if(w==null)return{t:'—'};let m=w-b;if(m<=0)m+=1440;if(m>960)return{t:'—',bad:1};return{h:m/60,t:(m/60).toFixed(1).replace('.0','')+'時間'+(wr==null?'（測定）':'')}}
+const alc=d=>{const x=day(d);return x.alc!==undefined?x.alc:(x.meals||[]).some(m=>m.type==='dinner'&&m.alc==='yes')};
+const QS=[['千里の道も一歩から','老子『道徳経』'],['過ぎたるは猶及ばざるが如し','『論語』先進篇'],['天は自ら助くる者を助く','S・スマイルズ『自助論』']];
+function setD(v){if(v){D=v;render()}}
+function render(){GOAL=+S.set.goal>0?+S.set.goal:85;
+ $('#dt').value=D;const lw=lastW(D),x=day(D),q=QS[Math.floor(new Date(T0+'T00:00:00Z')/864e5)%3];
+ let g='体重の記録がありません。体重を記録しましょう。';if(lw){const d=S.days[lw].w-GOAL;g=`<span class="big">${d>0?'あと '+f1(d)+' kg':d===0?'目標達成':'目標より '+f1(-d)+' kg下'}</span><br><span class="m">${lw}の体重 ${f1(S.days[lw].w)} kg ／ 目標 ${GOAL} kg</span>`}
+ prog();insR();$('#top').innerHTML=g+`<div class="m" style="margin-top:6px">今日の格言：${q[0]}（${q[1]}）</div>`;
+ // meals
+ const ms=(x.meals||[]).slice().sort((a,b)=>(a.time?0:1)-(b.time?0:1)||(a.time||'').localeCompare(b.time||'')),t=tot(D),st=S.set;let mh='',last='#';
+ ms.forEach(m=>{const h=m.time||'時刻不明';if(h!==last){mh+=`<div class="m" style="margin-top:6px"><b>${h}</b></div>`;last=h}
+  mh+=`<div class="row"><b>${E(m.name)||'（名称なし）'}</b>${m.type==='dinner'?' <span class="m">会食・集計外</span>':''}<span class="m">${m.kcal!==''&&m.kcal!=null?m.kcal+' kcal ':''}P${m.p||'—'} F${m.f||'—'} C${m.c||'—'}</span><span style="margin-left:auto"><button class="s" onclick="openM('${m.id}')">編集</button> <button class="s" onclick="delM('${m.id}')">削除</button></span>${(m.ph||[]).length?'<div style="width:100%">'+m.ph.map(u=>`<img src="${u}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;margin-right:4px">`).join('')+'</div>':''}${m.type!=='dinner'&&(m.p||m.f||m.c)?'<div style="width:100%">'+bal(m.p,m.f,m.c)+'</div>':''}${m.adv?`<div class="adv" style="width:100%">🏋️ ${E(m.adv)}</div>`:''}</div>`});
+ const rem=(k,l,u)=>{const g=+st['g'+k];if(!g)return'';return t[k]==null?` 目標${g}`:` 目標${g}（${g-t[k]>=0?'残り '+(g-t[k]):'超過 '+(t[k]-g)}）`};
+ let sm=`<div class="m" style="margin-top:8px"><b>${t.dn?'1日の小計（会食を除く）／会食'+t.dn+'件':'1日の集計'}</b><br>kcal ${t.kcal??'—'}${rem('kcal')} ／ P ${t.p??'—'}${rem('p')} ／ F ${t.f??'—'}${rem('f')} ／ C ${t.c??'—'}${rem('c')}</div>${bal(t.p,t.f,t.c)}<button class="s" onclick="dayRev()">🏋️ トレーナーの総評</button><div id="rev" class="adv" style="white-space:pre-wrap;${x.rev?'':'display:none'}">${E(x.rev)}</div>`;
+ const a=alc(D);
+ const sc=(x.sm?1:0)+(x.sn?1:0);
+ $('#L').innerHTML=`<div class="card" id="meal"><h2>食事 <span class="m">${ms.length?ms.length+'件':'未記録'}</span></h2><button onclick="openM()">＋ 食事を記録</button>${mh}${sm}</div>
+ <div class="card"><label class="chk nf"><input type="checkbox" ${a?'checked':''} onchange="tg('alc',this.checked)">飲酒 <span class="m">${a?'飲酒あり':'記録なし'}</span></label></div>
+ <div class="card" id="sup"><h2>サプリ <span class="m">${sc} / 2 回</span></h2><label class="chk"><input type="checkbox" ${x.sm?'checked':''} onchange="tg('sm',this.checked)">朝のサプリ</label><label class="chk"><input type="checkbox" ${x.sn?'checked':''} onchange="tg('sn',this.checked)">夜のサプリ</label></div>
+ <div class="card" id="wt">${wtCard()}</div>`;
+ // right
+ const td=S.todo[D]||[];
+ $('#R').innerHTML=`<div class="card" id="todo"><h2>通知・チェック項目</h2><div class="m">朝の通知の自動取り込みはこの版では未対応です。自分で追加した項目を管理できます。</div>
+ ${td.map(i=>`<div class="row"><label class="chk" style="flex:1"><input type="checkbox" ${i.d?'checked':''} onchange="tdT('${i.id}')">${E(i.t)}</label><button class="s" onclick="tdD('${i.id}')">削除</button></div>`).join('')}
+ <div class="row"><input id="ti" maxlength="120" placeholder="項目を追加（120文字まで）" style="flex:1"><button onclick="tdA()">追加</button></div></div>
+ <div class="card" id="trn">${trn()}</div>
+ <div class="card" id="read"><h2>読書</h2><label class="chk"><input type="checkbox" ${x.read?'checked':''} onchange="tg('read',this.checked)">読書完了 <span class="m">目安：1日30分</span></label></div>`;
+ $('#foot').innerHTML=`${msg?`<div class="err">${msg}</div>`:''}日次記録はこのiPhone内に保存されます。端末を変えると表示されないため、「アプリ設定」からバックアップを書き出せます。<br>iPhone：Safariの共有ボタン →「ホーム画面に追加」で追加できます。<br>食事写真は縮小した小さな画像として保存されます。`;document.querySelectorAll('.chk:not(.nf)').forEach(l=>l.classList.toggle('d',l.querySelector('input').checked))}
+function tg(k,v){day(D)[k]=v;save();render()}
+function wtCard(){const x=day(D),lw=lastW(D),w=S.days[lw]||{},sel=x.w>0;let h='<h2>体重・体調・カロリー</h2><button onclick="openW()">＋ 体重を記録</button>';
+ if(lw){const prev=wds().filter(k=>k<lw).pop(),av=avg('w',D);
+  h+=`<div style="margin-top:8px"><span class="big">${f1(w.w)} kg</span> <span class="m">${lw}${sel?'':'（直近）'}${w.wt?' '+w.wt:''}</span><br>`;
+  if(prev){const n=df(lw,prev),d=w.w-S.days[prev].w;h+=`${n===1?'前日':n+'日前'}比 ${d>=0?'+':'−'}${f1(Math.abs(d))} kg ／ `}
+  h+=`7日平均 ${f1(av.a)} kg（${av.n}日）`;
+  const bc=[['sm','骨格筋量','kg'],['sr','骨格筋率','%'],['fm','体脂肪量','kg'],['fr','体脂肪率','%']].filter(b=>w[b[0]]).map(b=>`${b[1]} ${w[b[0]]} ${b[2]}`);if(bc.length)h+='<br><span class="m">'+bc.join(' ／ ')+'</span>';
+  const pv=S.days[ad(D,-1)]||{};const nt=[];if((pv.meals||[]).some(m=>m.type==='dinner'))nt.push('前日は会食あり');if(alc(ad(D,-1)))nt.push('前日は飲酒あり');if((x.train||[]).some(t=>t.p==='ゴルフ'&&t.done))nt.push('当日はゴルフ');if(nt.length)h+='<br><span class="m">'+nt.join('・')+'</span>';h+='</div>'+chart()}
+ else h+='<div class="m">体重が未記録です。</div>';
+ h+=`<div style="margin-top:10px"><b>朝の体調</b><div class="row" style="border:0">${['すっきり','いつもどおり','疲れが残る'].map(c=>`<button class="${x.cond===c?'on':'s'}" onclick="cond('${c}')">${x.cond===c?'✓ ':''}${c}</button>`).join('')}</div>${x.cond?'':'<span class="m">未記録</span>'}</div>`;
+ const sl=sleep(D);h+=`<details style="margin-top:8px"><summary>睡眠の目安：${sl.bad?'入力を見直してください':sl.t}</summary><div class="g2"><label>就寝<input type="time" value="${x.bed||'00:00'}" onchange="sv('bed',this.value)"></label><label>起床<input type="time" value="${x.wake||''}" onchange="sv('wake',this.value)"></label></div><label>メモ<input value="${E(x.note)}" onchange="sv('note',this.value)" style="width:100%;box-sizing:border-box"></label></details>`;
+ h+=cal();return h}
+const sv=(k,v)=>{day(D)[k]=v;save();render()},cond=c=>{const x=day(D);x.cond=x.cond===c?'':c;save();render()};
+function chart(){const p=[];for(let i=13;i>=0;i--){const d=ad(D,-i),w=S.days[d]?.w;if(w>0)p.push([13-i,+w])}if(!p.length)return'';const v=p.map(a=>a[1]),mn=Math.min(...v)-.3,mx=Math.max(...v)+.3,X=i=>10+i*280/13,Y=y=>90-(y-mn)/(mx-mn)*80;
+ return`<svg viewBox="0 0 300 110" style="width:100%;max-width:100%;margin-top:8px" role="img" aria-label="14日間の体重推移"><polyline fill="none" stroke="var(--b)" stroke-width="2" points="${p.map(a=>X(a[0])+','+Y(a[1])).join(' ')}"/>${p.map(a=>`<circle cx="${X(a[0])}" cy="${Y(a[1])}" r="3" fill="var(--b)"/>`).join('')}<text x="2" y="106" font-size="9" fill="var(--m)">${ad(D,-13).slice(5)}</text><text x="270" y="106" font-size="9" fill="var(--m)">${D.slice(5)}</text><text x="2" y="9" font-size="9" fill="var(--m)">${f1(mx,1)}</text><text x="2" y="98" font-size="9" fill="var(--m)">${f1(mn,1)}</text></svg>`}
+function cal(){const s=S.set,lw=lastW(D),t=tot(D);let r='',why='';const age=s.birth?Math.floor(df(D,s.birth)/365.2425):null;
+ let tdee=null;if(lw&&s.h&&age!=null&&s.sex){const b=10*S.days[lw].w+6.25*s.h-5*age+(s.sex==='m'?5:-161);tdee=Math.round(b*1.2);r=`推定消費 ${tdee} kcal（安静時 ${Math.round(b)} ＋ 日常活動 ${tdee-Math.round(b)}、体重 ${f1(S.days[lw].w)} kg・${lw}）`}else why='設定または体重が未入力のため推定消費を計算できません';
+ const ms=(day(D).meals||[]);let diff='—';if(!ms.length)why=why||'摂取が未記録です';else if(t.dn)why=why||'会食を含む日は差を表示しません';else if(ms.some(m=>m.type!=='dinner'&&(m.kcal===''||m.kcal==null)))why=why||'カロリー不明の食事があります';else if(tdee)diff=(t.kcal-tdee>=0?'+':'')+(t.kcal-tdee)+' kcal';
+ return`<div style="margin-top:10px"><b>カロリー収支</b><br>摂取 ${t.kcal??'—'} ／ ${r||'推定消費 —'}<br>差（摂取−消費）：${diff} <span class="m">${diff==='—'?why:''}</span></div>
+ <details style="margin-top:6px"><summary>設定（身長・生年月日・目標）</summary><div class="g2"><label>目標体重 kg<input type="number" step="0.1" min="1" inputmode="decimal" value="${s.goal||GOAL}" onchange="ss('goal',this.value)"></label><label>身長 cm<input type="number" value="${s.h||''}" onchange="ss('h',this.value)"></label><label>生年月日<input type="date" value="${s.birth||''}" onchange="ss('birth',this.value)"></label>
+ <label>区分<select onchange="ss('sex',this.value)"><option value="">未設定</option><option value="m" ${s.sex==='m'?'selected':''}>男性（+5）</option><option value="f" ${s.sex==='f'?'selected':''}>女性（−161）</option></select></label>
+ ${[['kcal','kcal'],['p','P'],['f','F'],['c','C']].map(k=>`<label>目標 ${k[1]}<input type="number" value="${s['g'+k[0]]||''}" onchange="ss('g${k[0]}',this.value)"></label>`).join('')}</div></details>`}
+const ss=(k,v)=>{S.set[k]=v;save();render()};
+// training
+const PARTS=['脚・お尻','胸','背中','肩','腕','ゴルフ'];
+function trn(){const x=day(D),tr=x.train||[],ex=[ad(D,-1),ad(D,-2)].flatMap(d=>(S.days[d]?.train||[]).filter(t=>t.done).map(t=>t.p)),ls=p=>{for(let i=1;i<60;i++)if((S.days[ad(D,-i)]?.train||[]).some(t=>t.p===p&&t.done))return i;return 99};
+ const sg=PARTS.filter(p=>!ex.includes(p)&&!tr.some(t=>t.p===p)).sort((a,b)=>ls(b)-ls(a));
+ return`<h2>筋トレ <span class="m">1回30分が目安</span></h2><div class="m">おすすめ（前日・前々日の部位を除外）</div><div class="row" style="border:0">${sg.map(p=>`<button class="s" onclick="trA('${p}')">${p}</button>`).join('')||'<span class="m">候補なし</span>'}</div>
+ ${tr.map((t,i)=>`<div class="row"><label class="chk" style="flex:1"><input type="checkbox" ${t.done?'checked':''} onchange="trT(${i})">${t.p} <span class="m">${t.done?'完了':'予定'}</span></label><button class="s" onclick="trD(${i})">削除</button></div>`).join('')}`}
+function trA(p){const x=day(D);(x.train=x.train||[]).push({p,done:false});save();render()}
+function trT(i){const t=day(D).train[i];t.done=!t.done;save();render()}
+function trD(i){day(D).train.splice(i,1);save();render()}
+// todo
+function tdA(){const v=$('#ti').value.trim();if(!v)return;(S.todo[D]=S.todo[D]||[]).push({id:'t'+Date.now(),t:v.slice(0,120),d:false});save();render()}
+function tdT(id){const i=S.todo[D].find(a=>a.id===id);i.d=!i.d;save();render()}
+function tdD(id){S.todo[D]=S.todo[D].filter(a=>a.id!==id);save();render()}
+// meal dialog
+function openM(id){MD=D;EID=id||null;const m=id?(day(D).meals||[]).find(a=>a.id===id):null,g=k=>m?.[k]??'';
+ $('#m_type').value=m?m.type:'normal';$('#m_type').disabled=!!m;['name','kcal','p','f','c','memo','alc'].forEach(k=>$('#m_'+k).value=g(k));$('#m_time').value=m?(m.time||''):(D===jd()?jt():'');$('#m_err').textContent='';$('#m_st').textContent='';PH=(m?.ph||[]).map(th=>({th}));AN=m?.adv?{advice:m.adv,assume:m.as}:null;phR();md.showModal()}
+function preset(){const t=$('#m_type').value,P={pro:['プロテイン',20],yog:['ヨーグルト',10],chk:['茹でた胸肉',20]}[t];if(P){$('#m_name').value=P[0];$('#m_p').value=P[1]}}
+function saveM(){const old=(day(MD).meals||[]).find(z=>z.id===EID)||{};const v=k=>$('#m_'+k).value.trim(),t=v('type'),pr=['pro','yog','chk'].includes(t);const m={id:EID||'m'+Date.now(),type:pr?'normal':t,name:v('name'),time:v('time'),kcal:v('kcal'),p:v('p'),f:v('f'),c:v('c'),memo:v('memo'),alc:t==='dinner'?v('alc'):'',ph:PH.map(p=>p.th),adv:AN?AN.advice||'':old.adv||'',as:AN?AN.assume||'':old.as||''};
+ if(m.type==='normal'&&!m.name&&!m.kcal&&!m.p&&!m.f&&!m.c){$('#m_err').textContent='メニュー名か栄養値を入力してください。';return}
+ const x=day(MD),a=x.meals=x.meals||[],i=a.findIndex(z=>z.id===m.id);i>=0?a[i]=m:a.push(m);save();md.close();render()}
+function delM(id){if(!confirm('この食事を削除しますか？'))return;const x=day(D);x.meals=x.meals.filter(m=>m.id!==id);save();render()}
+// weight dialog
+function openW(){const x=day(D);$('#w_w').value=x.w||'';$('#w_d').value=D;$('#w_t').value=x.wt||'';['sm','sr','fm','fr'].forEach(k=>$('#w_'+k).value=x[k]||'');$('#w_err').textContent='';wd.showModal()}
+function saveW(){const n=k=>$('#w_'+k).value,w=+n('w'),d=n('d'),e=m=>$('#w_err').textContent=m;
+ if(!(w>=1&&w<=500))return e('体重は1〜500 kgで入力してください。');if(!d)return e('測定日を入力してください。');
+ for(const k of['sr','fr'])if(n(k)&&!(+n(k)>0&&+n(k)<=100))return e('率は0より大きく100以下にしてください。');
+ for(const k of['sm','fm'])if(n(k)&&+n(k)>w)return e('体組成のkgは体重以下にしてください。');
+ const x=day(d);if(x.w&&x.w!==w&&!confirm(d+'の体重を上書きしますか？'))return;
+ Object.assign(x,{w,wt:n('t'),sm:n('sm'),sr:n('sr'),fm:n('fm'),fr:n('fr')});save();wd.close();D=d;render()}
+// weekly review
+function review(){const a=(f,e)=>avg(f,e),rows=[['w','体重','kg'],['sm','骨格筋量','kg'],['fm','体脂肪量','kg']],p=ad(D,-7),pp=ad(D,-14);
+ const R={};let h=`<h2>1週間の振り返り</h2><div class="m">${ad(D,-6)}〜${D} と ${ad(D,-13)}〜${p}</div>`;
+ rows.forEach(r=>{const c=a(r[0],D),b=a(r[0],p);R[r[0]]=(c.n>=3&&b.n>=3)?c.a-b.a:null;h+=`<div class="row"><b>${r[1]}</b> 平均 ${f1(c.a)} ${r[2]}（${c.n}日）${R[r[0]]!=null?` ／ 前週差 ${R[r[0]]>=0?'+':'−'}${f1(Math.abs(R[r[0]]))}`:''}</div>`});
+ let sl=[],ad7=0,mo=0,tired=0;for(let i=0;i<7;i++){const d=ad(D,-i),s=sleep(d);if(s.h)sl.push(s.h);if(alc(d))ad7++;if(S.days[d]?.cond==='疲れが残る')tired++}
+ Object.keys(S.days).forEach(d=>{if(d.slice(0,7)===D.slice(0,7)&&alc(d))mo++});
+ h+=`<div class="row">睡眠の目安 平均 ${sl.length?f1(sl.reduce((a,b)=>a+b)/sl.length,1)+' 時間':'—'}（${sl.length}日）</div><div class="row">飲酒 直近7日 ${ad7}日 ／ 今月 ${mo}日</div>`;
+ const w2=a('w',pp),w1=a('w',p),w0=a('w',D),c2=(w0.n>=3&&w1.n>=3&&w2.n>=3)?[w0.a-w1.a,w1.a-w2.a]:null;let cm='';
+ if(R.w!=null&&R.w<=-.5&&(tired>=3||(R.sm!=null&&R.sm<=-.5)))cm='体重が落ちています。食事量と休養を振り返りましょう。';
+ else if(R.fm!=null&&R.fm<=-.3&&(R.sm==null||R.sm>-.5))cm='体脂肪が減っています。今の食事と筋トレのペースを続けましょう。';
+ else if(c2&&Math.abs(c2[0])<.2&&Math.abs(c2[1])<.2&&(R.fm==null||R.fm>-.3))cm='体重が横ばいです。普段と会食の日の食事量を振り返りましょう。';
+ $('#rb').innerHTML=h+(cm?`<p><b>${cm}</b></p>`:'');rd.showModal()}
+let PH=[],AN=null,sam=null;
+const SDK_URL='./vendor/anthropic-sdk-1.5.0.mjs',LS=k=>{try{return localStorage.getItem(k)||''}catch(e){return''}};
+let SDK=null;
+const b64=b=>new Promise((r,j)=>{const fr=new FileReader();fr.onload=()=>r(String(fr.result).split(',')[1]);fr.onerror=j;fr.readAsDataURL(b)});
+const getSam=async()=>{if(sam!==null)return sam;const key=LS('dsm_key');if(!key)return false;
+ try{SDK=SDK||await import(SDK_URL)}catch(e){return false}
+ const A=SDK.default||SDK.Anthropic,c=new A({apiKey:key,dangerouslyAllowBrowser:true}),model=LS('dsm_model')||'claude-opus-5-5';
+ const code=e=>{const x=new Error(e&&e.message||'error');x.code=e instanceof SDK.RateLimitError?'rate_limited':(e instanceof SDK.AuthenticationError||e instanceof SDK.PermissionDeniedError)?'not_granted':e&&e.code||'error';return x};
+ const call=async(q,o={})=>{const content=[];for(const b of o.images||[])content.push({type:'image',source:{type:'base64',media_type:b.type||'image/jpeg',data:await b64(b)}});content.push({type:'text',text:q});
+  const req={model,max_tokens:16000,messages:[{role:'user',content}]};
+  // 安全分類で断られたときは、サーバー側で別モデルに自動で切り替える（Haikuは非対応）
+  if(!model.startsWith('claude-haiku')){req.betas=['server-side-fallback-2026-07-01'];req.fallbacks='default'}
+  let r;try{r=await c.beta.messages.create(req)}catch(e){throw code(e)}
+  if(r.stop_reason==='refusal'){const x=new Error('refusal');x.code='refusal';throw x}
+  return{text:r.content.filter(b=>b.type==='text').map(b=>b.text).join('')}};
+ const f=(q,o)=>call(q,o);
+ f.json=async(q,o)=>{const{text}=await call(q,o),m=/\{[\s\S]*\}/.exec(text);if(!m){const x=new Error('bad json');x.code='error';throw x}return JSON.parse(m[0])};
+ f.limits=async()=>({images:true});return sam=f};
+function saveKey(){const k=$('#k_key').value.trim();try{if(k)localStorage.setItem('dsm_key',k);localStorage.setItem('dsm_model',$('#k_model').value)}catch(e){$('#k_st').textContent='保存に失敗しました。';return}sam=null;$('#k_key').value='';$('#k_st').textContent=LS('dsm_key')?'保存しました（キー末尾 …'+LS('dsm_key').slice(-4)+'）':'モデルを保存しました。APIキーが未設定です。'}
+function delKey(){if(!confirm('APIキーを削除しますか？'))return;try{localStorage.removeItem('dsm_key')}catch(e){}sam=null;$('#k_st').textContent='APIキーを削除しました。'}
+async function testKey(){const st=$('#k_st');st.textContent='⏳ 接続テスト中…';const s=await getSam();if(!s){st.textContent=LS('dsm_key')?'AIの読み込みに失敗しました。通信状況を確認してください。':'APIキーが未設定です。';sam=null;return}
+ try{await s('「OK」とだけ返してください。');st.textContent='✅ 接続できました（'+(LS('dsm_model')||'claude-opus-5-5')+'）'}catch(e){st.textContent=e.code==='not_granted'?'APIキーが無効か、権限がありません。':e.code==='rate_limited'?'利用上限に達しています。時間をおいて再試行してください。':'接続に失敗しました：'+e.message}}
+function expData(){const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='self-manager-backup-'+jd()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);$('#b_st').textContent='書き出しました。「ファイル」アプリなどに保存してください。'}
+async function impData(inp){const f=inp.files[0];inp.value='';if(!f)return;try{const d=JSON.parse(await f.text());if(!d||typeof d!=='object'||!d.days)throw 0;
+ if(!confirm('現在の記録をバックアップの内容で置き換えます。よろしいですか？'))return;S=Object.assign({days:{},set:{},todo:{}},d);save();render();$('#b_st').textContent='読み込みました。'}catch(e){$('#b_st').textContent='読み込めませんでした。このアプリで書き出したJSONファイルを選んでください。'}}
+const d2b=u=>{const[h,b]=u.split(','),m=atob(b),a=new Uint8Array(m.length);for(let i=0;i<m.length;i++)a[i]=m.charCodeAt(i);return new Blob([a],{type:'image/jpeg'})};
+const bal=(p,f,c)=>{p=+p||0;f=+f||0;c=+c||0;const k=[p*4,f*9,c*4],s=k[0]+k[1]+k[2];if(!s)return'';const r=k.map(v=>Math.round(v/s*100));return`<div class="pfc"><i style="width:${r[0]}%;background:#38bdf8"></i><i style="width:${r[1]}%;background:#fbbf24"></i><i style="width:${r[2]}%;background:#a78bfa"></i></div><div class="m">P ${p}g（${r[0]}%）／ F ${f}g（${r[1]}%）／ C ${c}g（${r[2]}%）<span style="opacity:.7"> ※エネルギー比</span></div>`};
+function shrink(f,M=1024){return new Promise(r=>{const i=new Image();i.onload=()=>{const mk=m=>{const k=Math.min(1,m/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext('2d').drawImage(i,0,0,c.width,c.height);return c};mk(M).toBlob(b=>r({blob:b,th:mk(160).toDataURL('image/jpeg',.6)}),'image/jpeg',.75)};i.src=URL.createObjectURL(f)})}
+async function addPh(inp){for(const f of[...inp.files]){if(PH.length>=5){$('#m_st').textContent='写真は最大5枚です。';break}PH.push(await shrink(f))}inp.value='';phR();if(PH.length)analyze()}
+function phR(){$('#m_ph').innerHTML=PH.map((p,i)=>`<span style="position:relative"><img src="${p.th}" style="width:64px;height:64px;object-fit:cover;border-radius:10px"><button class="s" style="position:absolute;top:-8px;right:-8px;min-height:26px;padding:0 8px;background:var(--c)" onclick="PH.splice(${i},1);phR()">×</button></span>`).join('');const a=AN;$('#m_an').innerHTML=a?`${a.name?`<b>${E(a.name)}</b>`:''}${a.p!=null?bal(a.p,a.f,a.c):''}${a.assume?`<div class="m">前提：${E(a.assume)}</div>`:''}${a.balance?`<div>${E(a.balance)}</div>`:''}${a.advice?`<div class="adv">🏋️ ${E(a.advice)}</div>`:''}${a.riceAsk?'<div class="row" style="border:0"><span class="m">ご飯の量：</span>'+[100,120,150].map(g=>`<button class="s" onclick="analyze(${g})">${g} g</button>`).join('')+'</div>':''}`:''}
+async function analyze(rice){const s=await getSam(),st=$('#m_st');if(!s){st.textContent='AI機能を使うには、画面下の「アプリ設定」でAPIキーを設定してください。数値は手入力でも保存できます。';return}
+ const nm=$('#m_name').value.trim(),memo=$('#m_memo').value.trim();if(!PH.length&&!nm){st.textContent='写真かメニュー名を入力してください。';return}
+ const bl=PH.map(p=>p.blob||d2b(p.th));if(bl.length){const l=await s.limits().catch(()=>({}));if(!l.images){st.textContent='この環境では写真の分析ができません。手入力してください。';return}}
+ st.textContent='⏳ 分析中…（写真・入力は保持されます）';
+ const q=`あなたはプロのパーソナルトレーナー兼管理栄養士です。食事の写真（同じ料理の別角度は一品として扱う）とメニュー名から栄養を推定し、JSONのみ返してください。\n形式: {"name":"料理名","kcal":数値,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"assume":"量・調理法の推定前提(60字以内)","balance":"PFCバランスと量の評価(80字以内)","advice":"筋肉量を維持しながら減量(目標体重${GOAL}kg)を続けるための、プロトレーナー目線の具体的助言(120字以内)","riceAsk":ご飯が写り量が結果に大きく影響し量の指定がない場合のみtrue}\n条件: 普段のご飯は「もち麦入りご飯」として推定（種類の明記があればそれを優先）。ご飯の量: ${rice?rice+'g':'指定なし'}。メニュー名: ${nm||'なし'}。補足: ${memo||'なし'}（食べた量・残した量の補足があれば優先）。判別できない項目はnull。数値は推定値。`;
+ try{const r=await s.json(q,bl.length?{images:bl,cache:false}:{cache:false});AN=r;if(!nm&&r.name)$('#m_name').value=r.name;['kcal','p','f','c'].forEach(k=>{if(r[k]!=null&&r[k]!=='')$('#m_'+k).value=Math.round(r[k]*10)/10});st.textContent='推定が完了しました。内容を確認・修正して保存してください。';phR()}
+ catch(e){st.textContent=e&&e.code==='rate_limited'?'利用上限に達しました。時間をおいて再試行するか、手入力してください。':e&&e.code==='not_granted'?'APIキーが無効か、権限がありません。「アプリ設定」を確認してください。手入力で保存できます。':'分析に失敗しました。再試行・手入力・写真のみの保存ができます。'}}
+async function dayRev(){const s=await getSam(),x=day(D),t=tot(D);if(!s){alert('AI機能を使うには、画面下の「アプリ設定」でAPIキーを設定してください。');return}
+ const ms=(x.meals||[]).map(m=>`${m.time||'時刻不明'} ${m.name} ${m.kcal||'?'}kcal P${m.p||'?'} F${m.f||'?'} C${m.c||'?'}${m.type==='dinner'?'(会食)':''}`).join('\n');if(!ms){alert('先に食事を記録してください');return}
+ const el=$('#rev');el.style.display='block';el.textContent='分析中…';
+ try{const r=await s(`あなたはプロのパーソナルトレーナー兼管理栄養士です。利用者（目標体重${GOAL}kg・筋肉量を維持して減量）の1日の食事を、数値（kcal・P/F/C・バランス）を根拠に、良い点・改善点・明日の具体策の順で日本語200字程度で評価してください。数値は推定です。\n設定:${JSON.stringify(S.set)}\n合計(会食除く):${JSON.stringify(t)}\n食事:\n${ms}`,{cache:false});x.rev=r.text.trim();save();render()}catch(e){el.textContent='取得に失敗しました。時間をおいて再試行してください。'}}
+function prog(){const x=day(D),td=S.todo[D]||[],it=[['朝サプリ',x.sm],['夜サプリ',x.sn],['体重',x.w>0],['食事',(x.meals||[]).length>0],['筋トレ',(x.train||[]).some(t=>t.done)],['読書',x.read],...td.map(i=>[i.t,i.d])],n=it.filter(a=>a[1]).length;
+ $('#prog').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><b>本日のタスク</b><span class="big">${n} / ${it.length}</span></div><div class="bar"><i style="width:${Math.round(n/it.length*100)}%"></i></div><div class="m">${n===it.length?'🎉 本日のタスクをすべて完了しました！':it.map(a=>(a[1]?'✔ ':'○ ')+E(a[0])).join('　')}</div>`}
+const TIPS=[['栄養','たんぱく質は1食20〜40 gを目安に毎食へ分けると、筋肉量の維持に役立ちます。'],['睡眠','寝る1時間前から画面の明るさを落とすと、寝つきが楽になりやすくなります。'],['習慣','新しい習慣は、既にある習慣の直後に置く（歯磨きの後に読書など）と続きやすくなります。'],['トレーニング','同じ部位は48時間ほど空けて回復させると、質の高い練習を続けやすくなります。'],['経営の視点','重要な仕事は集中できる午前に先に置き、連絡や会議は後ろにまとめましょう。'],['水分','のどが渇く前にこまめに水を飲む。飲酒日は同量の水を添えると翌朝が楽になります。'],['体重','体重は日々1〜2 kg前後動くことがあります。1回の数字より7日平均の傾向を見ましょう。']];
+function insR(){const i=S.ins&&S.ins.d===T0?S.ins:{c:TIPS[Math.floor(new Date(T0+'T00:00:00Z')/864e5)%7][0],t:TIPS[Math.floor(new Date(T0+'T00:00:00Z')/864e5)%7][1]};
+ $('#ins').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>💡 今日の気づき</b><button class="s" onclick="newIns()">別の気づき（AI）</button></div><div class="m" style="margin-top:4px">${E(i.c)}</div><div id="inst">${E(i.t)}</div>`}
+async function newIns(){const s=await getSam();if(!s){alert('AI機能を使うには、画面下の「アプリ設定」でAPIキーを設定してください。');return}const C=['栄養','トレーニング','睡眠','習慣づくり','経営の視点','学びと読書'],k=C[Math.floor(Math.random()*C.length)];$('#inst').textContent='取得中…';
+ try{const r=await s(`あなたは健康と経営に詳しいコーチです。「${k}」について、一人社長が今日から使える気づきを日本語で120字以内で1つだけ書いてください。出典に自信がない場合は出典を書かず、断定や誇張、医療的助言は避け、本文のみ返してください。`,{cache:false});S.ins={d:T0,c:k,t:r.text.trim()};save();insR()}catch(e){$('#inst').textContent='取得に失敗しました。時間をおいて再試行してください。'}}
+async function readW(inp){const f=inp.files[0];inp.value='';if(!f)return;const st=$('#w_st'),s=await getSam();
+ if(!s){st.textContent='AI機能を使うには、画面下の「アプリ設定」でAPIキーを設定してください。手入力でも保存できます。';return}
+ const l=await s.limits().catch(()=>({}));if(!l.images){st.textContent='この環境では画像の読み取りができません。手入力してください。';return}
+ st.textContent='⏳ 読み取り中…';
+ try{const p=await shrink(f,2000);
+ const r=await s.json(`オムロン コネクトのスクリーンショットから、画面内の体重カードに表示されている測定値を読み取り、JSONのみ返してください。形式: {"w":体重(kg),"m":測定月(数値),"d":測定日(数値),"t":"HH:MM","sm":骨格筋量(kg),"sr":骨格筋率(%),"fm":体脂肪量(kg),"fr":体脂肪率(%)}。条件: 体重カード内の値だけを使う。測定時刻はカードに表示された時刻を使い、端末の状態バーの時刻や現在時刻は使わない。kgと%は別の項目に入れる。不鮮明・判読できない・表示がない項目はnullにする。目標値などほかの数値を体重にしない。`,{images:[p.blob],cache:false});
+ const num=v=>v==null||v===''||isNaN(+v)?null:+v,pad=n=>String(n).padStart(2,'0'),T=jd(),y=+T.slice(0,4),m=num(r.m),d=num(r.d),set=(k,v)=>{$('#w_'+k).value=v==null?'':v};
+ const miss=[];
+ if(num(r.w)!=null)set('w',num(r.w));else miss.push('体重');
+ if(m>=1&&m<=12&&d>=1&&d<=31){const g=yy=>`${yy}-${pad(m)}-${pad(d)}`;let dt=g(y);if(dt>T)dt=g(y-1);set('d',dt)}else miss.push('測定日（入力欄の日付を確認）');
+ if(/^\d{1,2}:\d{2}$/.test(r.t||''))set('t',r.t.padStart(5,'0'));else{set('t','');miss.push('測定時刻')}
+ [['sm','骨格筋量'],['sr','骨格筋率'],['fm','体脂肪量'],['fr','体脂肪率']].forEach(([k,n])=>{if(num(r[k])!=null)set(k,num(r[k]));else{set(k,'');miss.push(n)}});
+ st.textContent='読み取り完了。画面の数値と見比べて確認・修正してから保存してください。'+(miss.length?' 読めなかった項目：'+miss.join('、'):'')}
+ catch(e){st.textContent=e&&e.code==='rate_limited'?'利用上限に達しました。時間をおいて再試行するか、手入力してください。':e&&e.code==='not_granted'?'APIキーが無効か、権限がありません。「アプリ設定」を確認してください。手入力で保存できます。':'読み取りに失敗しました。再試行するか、手入力してください。'}}
+const md=$('#md'),wd=$('#wd'),rd=$('#rd');
+function tick(){const n=jd();if(n!==T0){if(D===T0)D=n;T0=n;render()}}
+document.addEventListener('visibilitychange',tick);addEventListener('focus',tick);setInterval(tick,30000);
+render();
+$('#k_model').value=LS('dsm_model')||'claude-opus-5-5';if(LS('dsm_key'))$('#k_st').textContent='APIキー設定済み（末尾 …'+LS('dsm_key').slice(-4)+'）';
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+</script></body></html>
