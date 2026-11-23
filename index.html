@@ -116,7 +116,7 @@ function render(){GOAL=+S.set.goal>0?+S.set.goal:85;const opn=[...document.query
  ms.forEach(m=>{const h=m.time||'時刻不明';if(h!==last){mh+=`<div class="m" style="margin-top:6px"><b>${h}</b></div>`;last=h}
   mh+=`<div class="row"><b>${E(m.name)||'（名称なし）'}</b>${m.type==='dinner'?' <span class="m">会食・集計外</span>':''}<span class="m">${m.kcal!==''&&m.kcal!=null?m.kcal+' kcal ':''}P${m.p||'—'} F${m.f||'—'} C${m.c||'—'}</span><span style="margin-left:auto"><button class="s" onclick="openM('${m.id}')">編集</button> <button class="s" onclick="delM('${m.id}')">削除</button></span>${(m.ph||[]).length?'<div style="width:100%">'+m.ph.map(u=>`<img src="${u}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;margin-right:4px">`).join('')+'</div>':''}${m.type!=='dinner'&&(m.p||m.f||m.c)?'<div style="width:100%">'+bal(m.p,m.f,m.c)+'</div>':''}${m.adv?`<div class="adv" style="width:100%">🏋️ ${E(m.adv)}</div>`:''}</div>`});
   const gw=`<div class="gbw"><div class="m"><b>${t.dn?'1日の小計（会食を除く）／会食'+t.dn+'件':'1日の集計'}</b></div>${gbar('kcal',t.kcal,st.gkcal,' kcal')}${gbar('P',t.p,st.gp,' g')}${gbar('F',t.f,st.gf,' g')}${gbar('C',t.c,st.gc,' g')}${gleg('摂取','目標')}${st.gkcal||st.gp||st.gf||st.gc?'':'<div class="m">目標は「体重・体調・カロリー」の設定で入力できます。</div>'}</div>`;
- let sm=`<div style="margin-top:8px">${bal(t.p,t.f,t.c)}</div><button class="s" onclick="dayRev()">🏋️ トレーナーの総評</button><div id="rev" class="adv" style="white-space:pre-wrap;${x.rev?'':'display:none'}">${E(x.rev)}</div>`;
+ let sm=`<div style="margin-top:8px">${bal(t.p,t.f,t.c)}</div><button class="s" onclick="revT()">🏋️ トレーナーの総評 ${x.rev?(REVH[D]?'▾':'▴'):''}</button><div id="rev" class="adv" style="white-space:pre-wrap;${x.rev&&!REVH[D]?'':'display:none'}">${E(x.rev)}${x.rev?'<div style="margin-top:6px"><button class="s" onclick="dayRev()">🔄 今の食事内容で評価し直す</button></div>':''}</div>`;
  const a=alc(D);
  const sc=(x.sm?1:0)+(x.sn?1:0);
  $('#L').innerHTML=`<div class="card" id="meal"><h2>食事 <span class="m">${ms.length?ms.length+'件':'未記録'}</span></h2>${gw}<button onclick="openM()">＋ 食事を記録</button>${mh}${sm}</div>
@@ -191,7 +191,7 @@ function saveW(){const n=k=>$('#w_'+k).value,w=+n('w'),d=n('d'),e=m=>$('#w_err')
  Object.assign(x,{w,wt:n('t'),sm:n('sm'),sr:n('sr'),fm:n('fm'),fr:n('fr')});save();wd.close();D=d;render()}
 // weekly review
 function review(){const a=(f,e)=>avg(f,e),rows=[['w','体重','kg'],['sm','骨格筋量','kg'],['fm','体脂肪量','kg']],p=ad(D,-7),pp=ad(D,-14);
- const R={};let h=`<h2>1週間の振り返り</h2><div class="m">${ad(D,-6)}〜${D} と ${ad(D,-13)}〜${p}</div>`;
+ const R={};let h=`<h2 onclick="rd.close()" style="cursor:pointer">1週間の振り返り <span class="m">▴</span></h2><div class="m">${ad(D,-6)}〜${D} と ${ad(D,-13)}〜${p}</div>`;
  rows.forEach(r=>{const c=a(r[0],D),b=a(r[0],p);R[r[0]]=(c.n>=3&&b.n>=3)?c.a-b.a:null;h+=`<div class="row"><b>${r[1]}</b> 平均 ${f1(c.a)} ${r[2]}（${c.n}日）${R[r[0]]!=null?` ／ 前週差 ${R[r[0]]>=0?'+':'−'}${f1(Math.abs(R[r[0]]))}`:''}</div>`});
  let sl=[],ad7=0,mo=0,tired=0;for(let i=0;i<7;i++){const d=ad(D,-i),s=sleep(d);if(s.h)sl.push(s.h);if(alc(d))ad7++;if(S.days[d]?.cond==='疲れが残る')tired++}
  Object.keys(S.days).forEach(d=>{if(d.slice(0,7)===D.slice(0,7)&&alc(d))mo++});
@@ -251,7 +251,9 @@ async function analyze(rice){const s=await getSam(),st=$('#m_st');if(!s){st.text
  const q=`あなたはプロのパーソナルトレーナー兼管理栄養士です。食事の写真（同じ料理の別角度は一品として扱う）とメニュー名から栄養を推定し、JSONのみ返してください。\n形式: {"name":"料理名","kcal":数値,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"assume":"量・調理法の推定前提(60字以内)","balance":"PFCバランスと量の評価(80字以内)","advice":"筋肉量を維持しながら減量(目標体重${GOAL}kg)を続けるための、プロトレーナー目線の具体的助言(120字以内)","riceAsk":ご飯が写り量が結果に大きく影響し量の指定がない場合のみtrue}\n条件: 普段のご飯は「もち麦入りご飯」として推定（種類の明記があればそれを優先）。ご飯の量: ${rice?rice+'g':'指定なし'}。メニュー名: ${nm||'なし'}。補足: ${memo||'なし'}（食べた量・残した量の補足があれば優先）。判別できない項目はnull。数値は推定値。`;
  try{const r=await s.json(q,bl.length?{images:bl,cache:false}:{cache:false});AN=r;if(!nm&&r.name)$('#m_name').value=r.name;['kcal','p','f','c'].forEach(k=>{if(r[k]!=null&&r[k]!=='')$('#m_'+k).value=Math.round(r[k]*10)/10});st.textContent='推定が完了しました。内容を確認・修正して保存してください。';phR()}
  catch(e){st.textContent=e&&e.code==='rate_limited'?'利用上限に達しました。時間をおいて再試行するか、手入力してください。':e&&e.code==='not_granted'?'APIキーが無効か、権限がありません。「アプリ設定」を確認してください。手入力で保存できます。':'分析に失敗しました。再試行・手入力・写真のみの保存ができます。'}}
-async function dayRev(){const s=await getSam(),x=day(D),t=tot(D);if(!s){alert('AI機能を使うには、画面下の「アプリ設定」でAPIキーを設定してください。');return}
+const REVH={};
+function revT(){const x=day(D);if(!x.rev){dayRev();return}REVH[D]=!REVH[D];render()}
+async function dayRev(){REVH[D]=false;const s=await getSam(),x=day(D),t=tot(D);if(!s){alert('AI機能を使うには、画面下の「アプリ設定」でAPIキーを設定してください。');return}
  const ms=(x.meals||[]).map(m=>`${m.time||'時刻不明'} ${m.name} ${m.kcal||'?'}kcal P${m.p||'?'} F${m.f||'?'} C${m.c||'?'}${m.type==='dinner'?'(会食)':''}`).join('\n');if(!ms){alert('先に食事を記録してください');return}
  const el=$('#rev');el.style.display='block';el.textContent='分析中…';
  try{const r=await s(`あなたはプロのパーソナルトレーナー兼管理栄養士です。利用者（目標体重${GOAL}kg・筋肉量を維持して減量）の1日の食事を、数値（kcal・P/F/C・バランス）を根拠に、良い点・改善点・明日の具体策の順で日本語200字程度で評価してください。数値は推定です。\n設定:${JSON.stringify(S.set)}\n合計(会食除く):${JSON.stringify(t)}\n食事:\n${ms}`,{cache:false});x.rev=r.text.trim();save();render()}catch(e){el.textContent='取得に失敗しました。時間をおいて再試行してください。'}}
