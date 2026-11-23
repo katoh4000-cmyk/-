@@ -121,7 +121,7 @@ function render(){GOAL=+S.set.goal>0?+S.set.goal:85;const opn=[...document.query
  // right
  $('#R').innerHTML=`<div class="card" id="trn">${trn()}</div>
  <div class="card" id="read"><h2>読書</h2><label class="chk"><input type="checkbox" ${x.read?'checked':''} onchange="tg('read',this.checked)">読書完了 <span class="m">目安：1日30分</span></label></div>`;
- $('#foot').innerHTML=`${msg?`<div class="err">${msg}</div>`:''}日次記録はこのiPhone内に保存されます。端末を変えると表示されないため、「アプリ設定」からバックアップを書き出せます。<br>iPhone：Safariの共有ボタン →「ホーム画面に追加」で追加できます。<br>食事写真は縮小した小さな画像として保存されます。`;document.querySelectorAll('.chk:not(.nf)').forEach(l=>l.classList.toggle('d',l.querySelector('input').checked));opn.forEach(id=>{const d=document.getElementById(id);if(d)d.open=true})}
+ $('#foot').innerHTML=msg?`<div class="err">${msg}</div>`:'';$('#foot').hidden=!msg;document.querySelectorAll('.chk:not(.nf)').forEach(l=>l.classList.toggle('d',l.querySelector('input').checked));opn.forEach(id=>{const d=document.getElementById(id);if(d)d.open=true})}
 function tg(k,v){day(D)[k]=v;save();render()}
 function wtCard(){const x=day(D),lw=lastW(D),w=S.days[lw]||{},sel=x.w>0;let h='<h2>体重・体調・カロリー</h2><button onclick="openW()">＋ 体重を記録</button>';
  if(lw){const prev=wds().filter(k=>k<lw).pop(),av=avg('w',D);
