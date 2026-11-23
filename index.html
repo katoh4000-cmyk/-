@@ -52,9 +52,9 @@ input,select,textarea{font-size:16px}
 <div class="cols"><div id="L"></div><div id="R"></div></div>
 <div class="card m" id="foot"></div>
 <details class="card" id="appset"><summary><b>アプリ設定（AI・バックアップ）</b></summary>
-<div style="margin-top:8px"><b>AI機能（Claude API）</b><div class="m">写真の栄養分析・体重画面の読み取り・トレーナーの総評・今日の気づきに使います。APIキーはこのiPhone内にだけ保存され、AnthropicのAPIへの送信にのみ使います。利用量に応じて料金がかかります。</div>
-<label>APIキー<input type="password" id="k_key" autocomplete="off" placeholder="sk-ant-..." style="width:100%;box-sizing:border-box"></label>
-<label>モデル<select id="k_model" style="width:100%;box-sizing:border-box"><option value="claude-opus-5-5">Claude Opus 5.5（高精度）</option><option value="claude-sonnet-5-5">Claude Sonnet 5.5（標準）</option><option value="claude-haiku-5-5">Claude Haiku 5.5（低コスト）</option></select></label>
+<div style="margin-top:8px"><b>AI機能（Gemini API）</b><div class="m">写真の栄養分析・体重画面の読み取り・トレーナーの総評・今日の気づきに使います。APIキーは Google AI Studio（aistudio.google.com）で発行します。キーはこのiPhone内にだけ保存され、Google の Gemini API への送信にのみ使います。無料枠の範囲・料金・データの扱いは Google の規約に従います。</div>
+<label>APIキー<input type="password" id="k_key" autocomplete="off" placeholder="AIza..." style="width:100%;box-sizing:border-box"></label>
+<label>モデル<select id="k_model" style="width:100%;box-sizing:border-box"></select></label><div class="m">キーを保存すると、そのキーで使えるモデルの一覧を Google から取得します。</div>
 <div class="row" style="border:0"><button onclick="saveKey()">保存</button><button class="s" onclick="testKey()">接続テスト</button><button class="s" onclick="delKey()">キーを削除</button></div><div class="m" id="k_st"></div></div>
 <div style="margin-top:12px"><b>Google Drive 同期</b><div class="m">記録するたびに、Google Drive の「毎日の自己管理」フォルダへ自動で保存します。後日 Claude に記録を読んでもらうときに使います（食事の写真と APIキーは送りません）。設定手順は README の「Google Drive 同期」を参照してください。</div>
 <label>同期先URL（Apps Script のウェブアプリURL）<input id="g_url" type="url" autocomplete="off" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;box-sizing:border-box"></label>
@@ -188,27 +188,40 @@ function review(){const a=(f,e)=>avg(f,e),rows=[['w','体重','kg'],['sm','骨�
  else if(c2&&Math.abs(c2[0])<.2&&Math.abs(c2[1])<.2&&(R.fm==null||R.fm>-.3))cm='体重が横ばいです。普段と会食の日の食事量を振り返りましょう。';
  $('#rb').innerHTML=h+(cm?`<p><b>${cm}</b></p>`:'');rd.showModal()}
 let PH=[],AN=null,sam=null;
-const SDK_URL='./vendor/anthropic-sdk-1.5.0.mjs',LS=k=>{try{return localStorage.getItem(k)||''}catch(e){return''}};
-let SDK=null;
+const LS=k=>{try{return localStorage.getItem(k)||''}catch(e){return''}};
+// ---- AI 接続（Google Gemini API） ----
+const GAPI='https://generativelanguage.googleapis.com/v1beta/',GDEF='gemini-2.5-flash';
+const gmodel=()=>LS('dsm_gmodel')||GDEF;
 const b64=b=>new Promise((r,j)=>{const fr=new FileReader();fr.onload=()=>r(String(fr.result).split(',')[1]);fr.onerror=j;fr.readAsDataURL(b)});
-const getSam=async()=>{if(sam!==null)return sam;const key=LS('dsm_key');if(!key)return false;
- try{SDK=SDK||await import(SDK_URL)}catch(e){return false}
- const A=SDK.default||SDK.Anthropic,c=new A({apiKey:key,dangerouslyAllowBrowser:true}),model=LS('dsm_model')||'claude-opus-5-5';
- const code=e=>{const x=new Error(e&&e.message||'error');x.code=e instanceof SDK.RateLimitError?'rate_limited':(e instanceof SDK.AuthenticationError||e instanceof SDK.PermissionDeniedError)?'not_granted':e&&e.code||'error';return x};
- const call=async(q,o={})=>{const content=[];for(const b of o.images||[])content.push({type:'image',source:{type:'base64',media_type:b.type||'image/jpeg',data:await b64(b)}});content.push({type:'text',text:q});
-  const req={model,max_tokens:16000,messages:[{role:'user',content}]};
-  // 安全分類で断られたときは、サーバー側で別モデルに自動で切り替える（Haikuは非対応）
-  if(!model.startsWith('claude-haiku')){req.betas=['server-side-fallback-2026-07-01'];req.fallbacks='default'}
-  let r;try{r=await c.beta.messages.create(req)}catch(e){throw code(e)}
-  if(r.stop_reason==='refusal'){const x=new Error('refusal');x.code='refusal';throw x}
-  return{text:r.content.filter(b=>b.type==='text').map(b=>b.text).join('')}};
+const gerr=(st,j)=>{const m=(j&&j.error&&j.error.message)||('HTTP '+st),x=new Error(m);x.code=st===429?'rate_limited':(st===401||st===403||/API key/i.test(m))?'not_granted':st===404?'no_model':'error';return x};
+async function gfetch(path,key,body){let r;try{r=await fetch(GAPI+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:body?JSON.stringify(body):undefined})}catch(e){const x=new Error('通信できませんでした');x.code='offline';throw x}
+ let j=null;try{j=await r.json()}catch(e){}if(!r.ok)throw gerr(r.status,j);return j}
+const getSam=async()=>{if(sam!==null)return sam;const key=LS('dsm_gkey');if(!key)return false;
+ const call=async(q,o={},json=false)=>{const parts=[];for(const b of o.images||[])parts.push({inlineData:{mimeType:b.type||'image/jpeg',data:await b64(b)}});parts.push({text:q});
+  const body={contents:[{role:'user',parts}]};if(json)body.generationConfig={responseMimeType:'application/json'};
+  const r=await gfetch('models/'+encodeURIComponent(gmodel())+':generateContent',key,body),c=r&&r.candidates&&r.candidates[0];
+  const text=((c&&c.content&&c.content.parts)||[]).filter(p=>!p.thought&&p.text).map(p=>p.text).join('');
+  if(!text){const x=new Error((r&&r.promptFeedback&&r.promptFeedback.blockReason)||(c&&c.finishReason)||'empty');x.code='refusal';throw x}
+  return{text}};
  const f=(q,o)=>call(q,o);
- f.json=async(q,o)=>{const{text}=await call(q,o),m=/\{[\s\S]*\}/.exec(text);if(!m){const x=new Error('bad json');x.code='error';throw x}return JSON.parse(m[0])};
+ f.json=async(q,o)=>{const{text}=await call(q,o,true),m=/\{[\s\S]*\}/.exec(text);if(!m){const x=new Error('bad json');x.code='error';throw x}return JSON.parse(m[0])};
  f.limits=async()=>({images:true});return sam=f};
-function saveKey(){const k=$('#k_key').value.trim();try{if(k)localStorage.setItem('dsm_key',k);localStorage.setItem('dsm_model',$('#k_model').value)}catch(e){$('#k_st').textContent='保存に失敗しました。';return}sam=null;$('#k_key').value='';$('#k_st').textContent=LS('dsm_key')?'保存しました（キー末尾 …'+LS('dsm_key').slice(-4)+'）':'モデルを保存しました。APIキーが未設定です。'}
-function delKey(){if(!confirm('APIキーを削除しますか？'))return;try{localStorage.removeItem('dsm_key')}catch(e){}sam=null;$('#k_st').textContent='APIキーを削除しました。'}
-async function testKey(){const st=$('#k_st');st.textContent='⏳ 接続テスト中…';const s=await getSam();if(!s){st.textContent=LS('dsm_key')?'AIの読み込みに失敗しました。通信状況を確認してください。':'APIキーが未設定です。';sam=null;return}
- try{await s('「OK」とだけ返してください。');st.textContent='✅ 接続できました（'+(LS('dsm_model')||'claude-opus-5-5')+'）'}catch(e){st.textContent=e.code==='not_granted'?'APIキーが無効か、権限がありません。':e.code==='rate_limited'?'利用上限に達しています。時間をおいて再試行してください。':'接続に失敗しました：'+e.message}}
+// 使えるモデル一覧を取得し、安定版の Flash を優先して選ぶ
+async function loadModels(key){const j=await gfetch('models?pageSize=1000',key);
+ const ms=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')&&/^models\/gemini-/.test(m.name)&&!/(embed|tts|image|live|audio|exp|learnlm|robotics|computer)/i.test(m.name)).map(m=>({id:m.name.replace(/^models\//,''),label:m.displayName||m.name}));
+ const ver=id=>{const v=/gemini-(\d+(?:\.\d+)?)/.exec(id);return v?+v[1]:0},stable=id=>!/(preview|latest|-\d{3}$|-\d{2}-\d{2})/.test(id);
+ ms.sort((a,b)=>ver(b.id)-ver(a.id)||a.id.localeCompare(b.id));
+ const pick=ms.filter(m=>stable(m.id)&&/flash/.test(m.id)&&!/lite/.test(m.id))[0]||ms.filter(m=>/flash/.test(m.id))[0]||ms[0];
+ return{ms,pick:pick&&pick.id}}
+function fillModels(ms,cur){const sel=$('#k_model');const list=ms&&ms.length?ms:[{id:cur||GDEF,label:cur||GDEF}];if(!list.some(m=>m.id===cur))list.unshift({id:cur,label:cur});sel.innerHTML=list.map(m=>`<option value="${E(m.id)}">${E(m.label)}（${E(m.id)}）</option>`).join('');sel.value=cur}
+async function saveKey(){const k=$('#k_key').value.trim(),st=$('#k_st');try{if(k)localStorage.setItem('dsm_gkey',k);if($('#k_model').value)localStorage.setItem('dsm_gmodel',$('#k_model').value)}catch(e){st.textContent='保存に失敗しました。';return}sam=null;$('#k_key').value='';
+ const key=LS('dsm_gkey');if(!key){st.textContent='APIキーが未設定です。';return}
+ st.textContent='⏳ 使えるモデルを確認中…';
+ try{const{ms,pick}=await loadModels(key);try{localStorage.setItem('dsm_gmodels',JSON.stringify(ms));if(k||!LS('dsm_gmodel'))localStorage.setItem('dsm_gmodel',pick||GDEF)}catch(e){}fillModels(ms,gmodel());st.textContent='保存しました（キー末尾 …'+key.slice(-4)+'／モデル '+gmodel()+'）。続けて「接続テスト」を押してください。'}
+ catch(e){if(e.code==='not_granted'&&k){try{localStorage.removeItem('dsm_gkey')}catch(_){}}fillModels(null,gmodel());st.textContent=e.code==='not_granted'?'APIキーが無効です。コピーし直して入力してください。':'キーは保存しましたが、モデル一覧を取得できませんでした（'+e.message+'）。'}}
+function delKey(){if(!confirm('APIキーを削除しますか？'))return;try{localStorage.removeItem('dsm_gkey')}catch(e){}sam=null;$('#k_st').textContent='APIキーを削除しました。'}
+async function testKey(){const st=$('#k_st');st.textContent='⏳ 接続テスト中…';const s=await getSam();if(!s){st.textContent='APIキーが未設定です。';return}
+ try{await s('「OK」とだけ返してください。');st.textContent='✅ 接続できました（'+gmodel()+'）'}catch(e){st.textContent=e.code==='not_granted'?'APIキーが無効か、権限がありません。':e.code==='rate_limited'?'利用上限に達しています（無料枠の上限の可能性があります）。時間をおいて再試行してください。':e.code==='no_model'?'選んだモデルが使えません。「保存」を押してモデル一覧を更新してください。':'接続に失敗しました：'+e.message}}
 function expData(){const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='self-manager-backup-'+jd()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);$('#b_st').textContent='書き出しました。「ファイル」アプリなどに保存してください。'}
 async function impData(inp){const f=inp.files[0];inp.value='';if(!f)return;try{const d=JSON.parse(await f.text());if(!d||typeof d!=='object'||!d.days)throw 0;
  if(!confirm('現在の記録をバックアップの内容で置き換えます。よろしいですか？'))return;S=Object.assign({days:{},set:{},todo:{}},d);save();render();$('#b_st').textContent='読み込みました。'}catch(e){$('#b_st').textContent='読み込めませんでした。このアプリで書き出したJSONファイルを選んでください。'}}
@@ -253,7 +266,7 @@ const md=$('#md'),wd=$('#wd'),rd=$('#rd');
 function tick(){const n=jd();if(n!==T0){if(D===T0)D=n;T0=n;render()}}
 document.addEventListener('visibilitychange',tick);addEventListener('focus',tick);setInterval(tick,30000);
 render();
-$('#k_model').value=LS('dsm_model')||'claude-opus-5-5';if(LS('dsm_key'))$('#k_st').textContent='APIキー設定済み（末尾 …'+LS('dsm_key').slice(-4)+'）';
+{let ms=null;try{ms=JSON.parse(LS('dsm_gmodels')||'null')}catch(e){}fillModels(ms,gmodel())}$('#k_model').onchange=function(){try{localStorage.setItem('dsm_gmodel',this.value)}catch(e){}sam=null};if(LS('dsm_gkey'))$('#k_st').textContent='APIキー設定済み（末尾 …'+LS('dsm_gkey').slice(-4)+'）';
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 // ---- Google Drive 同期（Apps Script 経由） ----
 function syncData(){const c=JSON.parse(JSON.stringify(S));Object.values(c.days||{}).forEach(d=>(d.meals||[]).forEach(m=>delete m.ph));return c}
