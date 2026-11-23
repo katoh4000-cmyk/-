@@ -120,7 +120,7 @@ function render(){GOAL=+S.set.goal>0?+S.set.goal:85;const opn=[...document.query
  const a=alc(D);
  const sc=(x.sm?1:0)+(x.sn?1:0);
  $('#L').innerHTML=`<div class="card" id="meal"><h2>食事 <span class="m">${ms.length?ms.length+'件':'未記録'}</span></h2>${gw}<button onclick="openM()">＋ 食事を記録</button>${mh}${sm}</div>
- <div class="card"><label class="chk nf"><input type="checkbox" ${a?'checked':''} onchange="tg('alc',this.checked)">飲酒 <span class="m">${a?'飲酒あり':'記録なし'}</span></label></div>
+ <div class="card" id="alc"><h2>飲酒 <span class="m">${x.alcLv||(a?'飲酒あり':'記録なし')}</span></h2><div class="row" style="border:0">${['軽く','ほろ酔い','泥酔'].map(c=>`<button class="${x.alcLv===c?'on':'s'}" onclick="alcL('${c}')">${x.alcLv===c?'✓ ':''}${c}</button>`).join('')}</div></div>
  <div class="card" id="sup"><h2>サプリ <span class="m">${sc} / 2 回</span></h2><label class="chk"><input type="checkbox" ${x.sm?'checked':''} onchange="tg('sm',this.checked)">朝のサプリ</label><label class="chk"><input type="checkbox" ${x.sn?'checked':''} onchange="tg('sn',this.checked)">夜のサプリ</label></div>
  <div class="card" id="wt">${wtCard()}</div>`;
  // right
@@ -134,6 +134,8 @@ function gbar(l,v,g,u){g=+g||0;const has=v!=null&&v!=='';const vv=has?+v:0;
  const dt=!has?'<span class="m">未記録</span>':d<0?`<span class="dm">−${fmtN(-d)}${u}（残り）</span>`:d>0?`<span class="dp">+${fmtN(d)}${u}（超過）</span>`:'<span class="dm">±0（目標どおり）</span>';
  return`<div class="gb"><div class="gbh"><span><b>${l}</b> ${has?fmtN(vv):'—'} / ${fmtN(g)}${u}</span>${dt}</div><div class="gbt"><i class="u" style="width:${pc(Math.min(vv,g))}%"></i>${d<0?`<i class="r" style="left:${pc(vv)}%;width:${pc(g)-pc(vv)}%"></i>`:''}${d>0?`<i class="o" style="left:${pc(g)}%;width:${pc(vv)-pc(g)}%"></i>`:''}<i class="gm" style="left:calc(${pc(g)}% - 1px)"></i></div></div>`}
 const gleg=(a,b)=>`<div class="gbl"><span><i style="background:linear-gradient(90deg,var(--b),var(--a2))"></i>${a}</span><span><i style="background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--b) 35%,transparent) 0 3px,transparent 3px 6px);border:1px solid var(--l)"></i>${b}までの残り</span><span><i style="background:var(--r)"></i>超過</span><span><i style="background:var(--t);width:2px"></i>${b}</span></div>`;
+// 飲酒の程度：同じボタンをもう一度押すと取り消し
+function alcL(c){const x=day(D);x.alcLv=x.alcLv===c?'':c;x.alc=!!x.alcLv;save();render()}
 function tg(k,v){day(D)[k]=v;save();render()}
 function wtCard(){const x=day(D),lw=lastW(D),w=S.days[lw]||{},sel=x.w>0;let h='<h2>体重・体調・カロリー</h2><button onclick="openW()">＋ 体重を記録</button>';
  if(lw){const prev=wds().filter(k=>k<lw).pop(),av=avg('w',D);
