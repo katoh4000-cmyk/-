@@ -210,7 +210,7 @@ const LS=k=>{try{return localStorage.getItem(k)||''}catch(e){return''}};
 const GAPI='https://generativelanguage.googleapis.com/v1beta/',GDEF='gemini-2.5-flash';
 const gmodel=()=>LS('dsm_gmodel')||GDEF;
 const b64=b=>new Promise((r,j)=>{const fr=new FileReader();fr.onload=()=>r(String(fr.result).split(',')[1]);fr.onerror=j;fr.readAsDataURL(b)});
-const gerr=(st,j)=>{const m=(j&&j.error&&j.error.message)||('HTTP '+st),x=new Error(m);x.status=st;x.code=st===429?'rate_limited':(st===401||st===403||/API key/i.test(m))?'not_granted':st===404?'no_model':'error';return x};
+const gerr=(st,j)=>{const m=(j&&j.error&&j.error.message)||('HTTP '+st),x=new Error(m);x.status=st;x.details=(j&&j.error&&j.error.details)||[];x.code=st===429?'rate_limited':(st===401||st===403||/API key/i.test(m))?'not_granted':st===404?'no_model':'error';return x};
 async function gfetch1(path,key,body){const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),90000);let r;
  try{r=await fetch(GAPI+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:body?JSON.stringify(body):undefined,signal:ac.signal})}
  catch(e){const x=new Error(ac.signal.aborted?'90秒以内に応答がありませんでした':'通信できませんでした');x.code=ac.signal.aborted?'timeout':'offline';throw x}finally{clearTimeout(tm)}
@@ -223,6 +223,9 @@ function altModels(cur){let ms=[];try{ms=JSON.parse(LS('dsm_gmodels')||'[]').map
  const ver=id=>{const v=/gemini-(\d+(?:\.\d+)?)/.exec(id);return v?+v[1]:0};
  return ms.filter(id=>id!==cur&&/flash/.test(id)&&!/(preview|exp)/.test(id)).sort((a,b)=>(/lite/.test(a)-/lite/.test(b))||ver(b)-ver(a)).slice(0,2)}
 const tcfg=m=>NOTHINK[m]?null:/gemini-2\.5-flash/.test(m)?{thinkingBudget:0}:/gemini-([3-9]|\d{2})/.test(m)?{thinkingLevel:'low'}:null;
+const rlD=e=>{const m=String(e&&e.message||''),d=JSON.stringify(e&&e.details||[]),w=/"retryDelay":"(\d+)/.exec(d);
+ const day=/per ?day|PerDay|daily/i.test(m+d),min=/per ?minute|PerMinute/i.test(m+d);
+ return'利用上限に達しました（'+(day?'1日あたりの無料枠の上限です。日本時間の夕方（16〜17時ごろ）にリセットされます':min?'1分あたりの上限です。'+(w?w[1]+'秒ほど':'1分ほど')+'おいて再試行してください':'無料枠の上限の可能性があります')+'）。'};
 const errD=e=>!e?'':e.code==='timeout'?'応答が遅すぎました':e.code==='offline'?'通信できませんでした':e.code==='refusal'?'AIが回答を返しませんでした（'+e.message+'）':e.code==='no_model'?'選んだモデルが使えません。「アプリ設定」で「保存」を押してください':e.code==='badjson'?'AIの回答を読み取れませんでした':String(e.message||'不明なエラー').slice(0,140);
 const getSam=async()=>{if(sam!==null)return sam;const key=LS('dsm_gkey');if(!key)return false;
  const call=async(q,o={},json=false)=>{const parts=[];for(const b of o.images||[])parts.push({inlineData:{mimeType:b.type||'image/jpeg',data:await b64(b)}});parts.push({text:q});
@@ -232,7 +235,7 @@ const getSam=async()=>{if(sam!==null)return sam;const key=LS('dsm_gkey');if(!key
    catch(e){if(!(tc&&e.status===400&&/think/i.test(e.message)))throw e;NOTHINK[mdl]=1;delete body.generationConfig.thinkingConfig;return await gfetch('models/'+encodeURIComponent(mdl)+':generateContent',key,body)}};
   // 選んだモデルが混雑（500番台）で使えないときは、同じキーで使える別の Flash モデルに自動で切り替える
   const ms=[gmodel(),...altModels(gmodel())];let r,err;LASTM='';
-  for(const m of ms){try{r=await gen(m);LASTM=m;break}catch(e){err=e;if(!(e.status>=500))throw e}}
+  for(const m of ms){try{r=await gen(m);LASTM=m;break}catch(e){err=e;if(!(e.status>=500||e.status===429))throw e}}
   if(!r)throw err;
   const c=r&&r.candidates&&r.candidates[0];
   const text=((c&&c.content&&c.content.parts)||[]).filter(p=>!p.thought&&p.text).map(p=>p.text).join('');
@@ -277,8 +280,8 @@ async function analyze0(rice){const s=await getSam(),st=$('#m_st');if(!s){st.tex
  const bl=PH.map(p=>p.blob||d2b(p.th));if(bl.length){const l=await s.limits().catch(()=>({}));if(!l.images){st.textContent='この環境では写真の分析ができません。手入力してください。';return}}
  const tk=elap(st,'⏳ 分析中…写真・入力は保持されます');
  const q=`あなたはプロのパーソナルトレーナー兼管理栄養士です。食事の写真（同じ料理の別角度は一品として扱う）とメニュー名から栄養を推定し、JSONのみ返してください。\n形式: {"name":"料理名","kcal":数値,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"assume":"量・調理法の推定前提(60字以内)","balance":"PFCバランスと量の評価(80字以内)","advice":"筋肉量を維持しながら減量(目標体重${GOAL}kg)を続けるための、プロトレーナー目線の具体的助言(120字以内)","riceAsk":ご飯が写り量が結果に大きく影響し量の指定がない場合のみtrue}\n条件: 普段のご飯は「もち麦入りご飯」として推定（種類の明記があればそれを優先）。ご飯の量: ${rice?rice+'g':'指定なし'}。メニュー名: ${nm||'なし'}。補足: ${memo||'なし'}（食べた量・残した量の補足があれば優先）。判別できない項目はnull。数値は推定値。`;
- try{const r=await s.json(q,bl.length?{images:bl,cache:false}:{cache:false});AN=r;if(!nm&&r.name)$('#m_name').value=r.name;['kcal','p','f','c'].forEach(k=>{if(r[k]!=null&&r[k]!=='')$('#m_'+k).value=Math.round(r[k]*10)/10});clearInterval(tk);st.textContent='推定が完了しました。内容を確認・修正して保存してください。'+(LASTM&&LASTM!==gmodel()?'（混雑のため '+LASTM+' で分析）':'');phR()}
- catch(e){clearInterval(tk);st.textContent=e&&e.code==='rate_limited'?'利用上限に達しました（無料枠の上限の可能性があります）。1分ほどおいて「栄養を分析」を押すか、手入力してください。':e&&e.code==='not_granted'?'APIキーが無効か、権限がありません。「アプリ設定」を確認してください。手入力で保存できます。':'分析に失敗しました（'+(e&&e.status>=500?'Google側が混雑しています':errD(e))+'）。'+(AN?'下の推定結果は前回の分析のものです。':'')+'少しおいて「栄養を分析」で再試行するか、手入力・写真のみで保存できます。'}}
+ try{const r=await s.json(q,bl.length?{images:bl,cache:false}:{cache:false});AN=r;if(!nm&&r.name)$('#m_name').value=r.name;['kcal','p','f','c'].forEach(k=>{if(r[k]!=null&&r[k]!=='')$('#m_'+k).value=Math.round(r[k]*10)/10});clearInterval(tk);st.textContent='推定が完了しました。内容を確認・修正して保存してください。'+(LASTM&&LASTM!==gmodel()?'（混雑・上限のため '+LASTM+' で分析）':'');phR()}
+ catch(e){clearInterval(tk);st.textContent=e&&e.code==='rate_limited'?rlD(e)+'手入力でも保存できます。':e&&e.code==='not_granted'?'APIキーが無効か、権限がありません。「アプリ設定」を確認してください。手入力で保存できます。':'分析に失敗しました（'+(e&&e.status>=500?'Google側が混雑しています':errD(e))+'）。'+(AN?'下の推定結果は前回の分析のものです。':'')+'少しおいて「栄養を分析」で再試行するか、手入力・写真のみで保存できます。'}}
 const REVH={};
 function revT(){const x=day(D);if(!x.rev){dayRev();return}REVH[D]=!REVH[D];render()}
 async function dayRev(){REVH[D]=false;const s=await getSam(),x=day(D),t=tot(D);if(!s){alert('AI機能を使うには、画面下の「アプリ設定」でAPIキーを設定してください。');return}
@@ -304,8 +307,8 @@ async function readW(inp){const f=inp.files[0];inp.value='';if(!f)return;const s
  if(m>=1&&m<=12&&d>=1&&d<=31){const g=yy=>`${yy}-${pad(m)}-${pad(d)}`;let dt=g(y);if(dt>T)dt=g(y-1);set('d',dt)}else miss.push('測定日（入力欄の日付を確認）');
  if(/^\d{1,2}:\d{2}$/.test(r.t||''))set('t',r.t.padStart(5,'0'));else{set('t','');miss.push('測定時刻')}
  [['sm','骨格筋量'],['sr','骨格筋率'],['fm','体脂肪量'],['fr','体脂肪率']].forEach(([k,n])=>{if(num(r[k])!=null)set(k,num(r[k]));else{set(k,'');miss.push(n)}});
- clearInterval(tk);st.textContent='読み取り完了。画面の数値と見比べて確認・修正してから保存してください。'+(miss.length?' 読めなかった項目：'+miss.join('、'):'')}
- catch(e){clearInterval(tk);st.textContent=e&&e.code==='rate_limited'?'利用上限に達しました（無料枠の上限の可能性があります）。1分ほどおいて再試行するか、手入力してください。':e&&e.code==='not_granted'?'APIキーが無効か、権限がありません。「アプリ設定」を確認してください。手入力で保存できます。':'読み取りに失敗しました（'+(e&&e.status>=500?'Google側が混雑しています':errD(e))+'）。再試行するか、手入力してください。'}}
+ clearInterval(tk);st.textContent='読み取り完了。画面の数値と見比べて確認・修正してから保存してください。'+(LASTM&&LASTM!==gmodel()?'（混雑・上限のため '+LASTM+' で読み取り）':'')+(miss.length?' 読めなかった項目：'+miss.join('、'):'')}
+ catch(e){clearInterval(tk);st.textContent=e&&e.code==='rate_limited'?rlD(e)+'手入力でも保存できます。':e&&e.code==='not_granted'?'APIキーが無効か、権限がありません。「アプリ設定」を確認してください。手入力で保存できます。':'読み取りに失敗しました（'+(e&&e.status>=500?'Google側が混雑しています':errD(e))+'）。再試行するか、手入力してください。'}}
 const md=$('#md'),wd=$('#wd'),rd=$('#rd');
 function tick(){const n=jd();if(n!==T0){if(D===T0)D=n;T0=n;render()}}
 document.addEventListener('visibilitychange',tick);addEventListener('focus',tick);setInterval(tick,30000);
