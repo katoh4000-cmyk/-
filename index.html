@@ -215,14 +215,19 @@ const GAPI='https://generativelanguage.googleapis.com/v1beta/',GDEF='gemini-2.5-
 const gmodel=()=>LS('dsm_gmodel')||GDEF;
 const b64=b=>new Promise((r,j)=>{const fr=new FileReader();fr.onload=()=>r(String(fr.result).split(',')[1]);fr.onerror=j;fr.readAsDataURL(b)});
 const gerr=(st,j)=>{const m=(j&&j.error&&j.error.message)||('HTTP '+st),x=new Error(m);x.status=st;x.details=(j&&j.error&&j.error.details)||[];x.code=st===429?'rate_limited':(st===401||st===403||/API key/i.test(m))?'not_granted':st===404?'no_model':'error';return x};
-async function gfetch1(path,key,body){const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),90000);let r;
+async function gfetch1(path,key,body,tmo=90000){const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),tmo);let r;
  try{r=await fetch(GAPI+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:body?JSON.stringify(body):undefined,signal:ac.signal})}
- catch(e){const x=new Error(ac.signal.aborted?'90秒以内に応答がありませんでした':'通信できませんでした');x.code=ac.signal.aborted?'timeout':'offline';throw x}finally{clearTimeout(tm)}
+ catch(e){const x=new Error(ac.signal.aborted?Math.round(tmo/1000)+'秒以内に応答がありませんでした':'通信できませんでした');x.code=ac.signal.aborted?'timeout':'offline';throw x}finally{clearTimeout(tm)}
  let j=null;try{j=await r.json()}catch(e){}if(!r.ok)throw gerr(r.status,j);return j}
 // サーバー混雑（500/503）や一時的な通信断は、間をおいて最大2回まで自動で再試行
 async function gfetch(path,key,body){for(let i=0;;i++){try{return await gfetch1(path,key,body)}catch(e){if(i>=2||!(e.code==='offline'||e.status>=500))throw e;await new Promise(r=>setTimeout(r,2000*(i+1)))}}}
 // 応答を速くするため、考える量（thinking）を抑える。モデルが対応していない場合は外して送り直す
 const NOTHINK={};let LASTM='';
+// 数値の読み取り用：軽量な Flash-Lite を優先し、だめなら設定中のモデル（最大2つ）
+function fastModels(){let ms=[];try{ms=JSON.parse(LS('dsm_gmodels')||'[]').map(m=>m.id)}catch(e){}
+ const ver=id=>{const v=/gemini-(\d+(?:\.\d+)?)/.exec(id);return v?+v[1]:0};
+ const lite=ms.filter(id=>/flash-lite/.test(id)&&!/(preview|exp)/.test(id)).sort((a,b)=>ver(b)-ver(a))[0]||'gemini-2.5-flash-lite';
+ return[...new Set([lite,gmodel()])]}
 function altModels(cur){let ms=[];try{ms=JSON.parse(LS('dsm_gmodels')||'[]').map(m=>m.id)}catch(e){}if(!ms.includes(GDEF))ms.push(GDEF);
  const ver=id=>{const v=/gemini-(\d+(?:\.\d+)?)/.exec(id);return v?+v[1]:0};
  return ms.filter(id=>id!==cur&&/flash/.test(id)&&!/(preview|exp)/.test(id)).sort((a,b)=>(/lite/.test(a)-/lite/.test(b))||ver(b)-ver(a)).slice(0,2)}
@@ -235,11 +240,12 @@ const getSam=async()=>{if(sam!==null)return sam;const key=LS('dsm_gkey');if(!key
  const call=async(q,o={},json=false)=>{const parts=[];for(const b of o.images||[])parts.push({inlineData:{mimeType:b.type||'image/jpeg',data:await b64(b)}});parts.push({text:q});
   const gen=async mdl=>{const body={contents:[{role:'user',parts}],generationConfig:{}};if(json)body.generationConfig.responseMimeType='application/json';
    const tc=tcfg(mdl);if(tc)body.generationConfig.thinkingConfig=tc;
-   try{return await gfetch('models/'+encodeURIComponent(mdl)+':generateContent',key,body)}
-   catch(e){if(!(tc&&e.status===400&&/think/i.test(e.message)))throw e;NOTHINK[mdl]=1;delete body.generationConfig.thinkingConfig;return await gfetch('models/'+encodeURIComponent(mdl)+':generateContent',key,body)}};
+   const go=()=>o.fast?gfetch1('models/'+encodeURIComponent(mdl)+':generateContent',key,body,15000):gfetch('models/'+encodeURIComponent(mdl)+':generateContent',key,body);
+   try{return await go()}
+   catch(e){if(!(tc&&e.status===400&&/think/i.test(e.message)))throw e;NOTHINK[mdl]=1;delete body.generationConfig.thinkingConfig;return await go()}};
   // 選んだモデルが混雑（500番台）で使えないときは、同じキーで使える別の Flash モデルに自動で切り替える
-  const ms=[gmodel(),...altModels(gmodel())];let r,err;LASTM='';
-  for(const m of ms){try{r=await gen(m);LASTM=m;break}catch(e){err=e;if(!(e.status>=500||e.status===429))throw e}}
+  const ms=o.fast?fastModels():[gmodel(),...altModels(gmodel())];let r,err;LASTM='';
+  for(const m of ms){try{r=await gen(m);LASTM=m;break}catch(e){err=e;if(!(e.status>=500||e.status===429||(o.fast&&(e.code==='timeout'||e.code==='no_model'))))throw e}}
   if(!r)throw err;
   const c=r&&r.candidates&&r.candidates[0];
   const text=((c&&c.content&&c.content.parts)||[]).filter(p=>!p.thought&&p.text).map(p=>p.text).join('');
@@ -303,15 +309,15 @@ async function readW(inp){const f=inp.files[0];inp.value='';if(!f)return;const s
  if(!s){st.textContent='AI機能を使うには、画面下の「アプリ設定」でAPIキーを設定してください。手入力でも保存できます。';return}
  const l=await s.limits().catch(()=>({}));if(!l.images){st.textContent='この環境では画像の読み取りができません。手入力してください。';return}
  const tk=elap(st,'⏳ 読み取り中…');
- try{const p=await shrink(f,1600);
- const r=await s.json(`オムロン コネクトのスクリーンショットから、画面内の体重カードに表示されている測定値を読み取り、JSONのみ返してください。形式: {"w":体重(kg),"m":測定月(数値),"d":測定日(数値),"t":"HH:MM","sm":骨格筋量(kg),"sr":骨格筋率(%),"fm":体脂肪量(kg),"fr":体脂肪率(%)}。条件: 体重カード内の値だけを使う。測定時刻はカードに表示された時刻を使い、端末の状態バーの時刻や現在時刻は使わない。kgと%は別の項目に入れる。不鮮明・判読できない・表示がない項目はnullにする。目標値などほかの数値を体重にしない。`,{images:[p.blob],cache:false});
+ try{const p=await shrink(f,1024);
+ const r=await s.json(`オムロン コネクトのスクリーンショットから、画面内の体重カードに表示されている測定値を読み取り、JSONのみ返してください。形式: {"w":体重(kg),"m":測定月(数値),"d":測定日(数値),"t":"HH:MM","sm":骨格筋量(kg),"sr":骨格筋率(%),"fm":体脂肪量(kg),"fr":体脂肪率(%)}。条件: 体重カード内の値だけを使う。測定時刻はカードに表示された時刻を使い、端末の状態バーの時刻や現在時刻は使わない。kgと%は別の項目に入れる。不鮮明・判読できない・表示がない項目はnullにする。目標値などほかの数値を体重にしない。`,{images:[p.blob],fast:true});
  const num=v=>v==null||v===''||isNaN(+v)?null:+v,pad=n=>String(n).padStart(2,'0'),T=jd(),y=+T.slice(0,4),m=num(r.m),d=num(r.d),set=(k,v)=>{$('#w_'+k).value=v==null?'':v};
  const miss=[];
  if(num(r.w)!=null)set('w',num(r.w));else miss.push('体重');
  if(m>=1&&m<=12&&d>=1&&d<=31){const g=yy=>`${yy}-${pad(m)}-${pad(d)}`;let dt=g(y);if(dt>T)dt=g(y-1);set('d',dt)}else miss.push('測定日（入力欄の日付を確認）');
  if(/^\d{1,2}:\d{2}$/.test(r.t||''))set('t',r.t.padStart(5,'0'));else{set('t','');miss.push('測定時刻')}
  [['sm','骨格筋量'],['sr','骨格筋率'],['fm','体脂肪量'],['fr','体脂肪率']].forEach(([k,n])=>{if(num(r[k])!=null)set(k,num(r[k]));else{set(k,'');miss.push(n)}});
- clearInterval(tk);st.textContent='読み取り完了。画面の数値と見比べて確認・修正してから保存してください。'+(LASTM&&LASTM!==gmodel()?'（混雑・上限のため '+LASTM+' で読み取り）':'')+(miss.length?' 読めなかった項目：'+miss.join('、'):'')}
+ clearInterval(tk);st.textContent='読み取り完了。画面の数値と見比べて確認・修正してから保存してください。'+(miss.length?' 読めなかった項目：'+miss.join('、'):'')}
  catch(e){clearInterval(tk);st.textContent=e&&e.code==='rate_limited'?rlD(e)+'手入力でも保存できます。':e&&e.code==='not_granted'?'APIキーが無効か、権限がありません。「アプリ設定」を確認してください。手入力で保存できます。':'読み取りに失敗しました（'+(e&&e.status>=500?'Google側が混雑しています':errD(e))+'）。再試行するか、手入力してください。'}}
 const md=$('#md'),wd=$('#wd'),rd=$('#rd');
 function tick(){const n=jd();if(n!==T0){if(D===T0)D=n;T0=n;render()}}
