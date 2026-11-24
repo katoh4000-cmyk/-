@@ -52,6 +52,10 @@ dialog{max-height:92vh;overflow:auto}
 .gbt .gm{width:2px;background:var(--t)}.dm{color:var(--b);font-weight:700}.dp{color:var(--r);font-weight:700}
 .gbl{font-size:12px;color:var(--m);display:flex;gap:10px;flex-wrap:wrap}.gbl i{display:inline-block;width:14px;height:10px;border-radius:3px;vertical-align:middle;margin-right:3px}
 .g2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.g2 input,.g2 select{width:100%;box-sizing:border-box;min-width:0}
+/* iPhone の日付・時刻欄が枠からはみ出す・重なるのを防ぐ */
+.g2 input[type=date],.g2 input[type=time]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;min-height:44px;text-align:left}
+.g2 input[type=date]::-webkit-date-and-time-value,.g2 input[type=time]::-webkit-date-and-time-value{text-align:left;min-height:1.5em}
+.g2>label{min-width:0}
 input,select,textarea{font-size:16px}
 </style></head><body><div class="w">
 <header><h1>毎日の自己管理</h1><div><input type="date" id="dt" onchange="setD(this.value)"> <button class="s" onclick="setD(jd())">今日</button></div></header>
