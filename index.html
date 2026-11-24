@@ -79,7 +79,7 @@ input,select,textarea{font-size:16px}
 <label>メニュー名<input id="m_name"></label>
 <div class="g2"><label>時刻<input type="time" id="m_time"></label><label>kcal<input type="number" id="m_kcal" min="0" inputmode="decimal"></label>
 <label>P (g)<input type="number" id="m_p" min="0" inputmode="decimal"></label><label>F (g)<input type="number" id="m_f" min="0" inputmode="decimal"></label>
-<label>C (g)<input type="number" id="m_c" min="0" inputmode="decimal"></label><label>飲酒（会食）<select id="m_alc"><option value="">未入力</option><option value="yes">飲酒あり</option><option value="no">飲酒なし</option></select></label></div>
+<label>C (g)<input type="number" id="m_c" min="0" inputmode="decimal"></label><label>飲酒（会食）<select id="m_alc"><option value="">なし・未入力</option><option value="軽く">軽く</option><option value="ほろ酔い">ほろ酔い</option><option value="泥酔">泥酔</option></select></label></div>
 <label>メモ・量の補足（食べた量/残した量など）<input id="m_memo"></label><div class="err" id="m_err"></div>
 <div class="row" style="border:0"><button onclick="saveM()">保存</button><button class="s" onclick="md.close()">閉じる</button></div></dialog>
 <dialog id="wd"><h2>体重を記録</h2>
@@ -104,7 +104,8 @@ const avg=(f,end,n=7)=>{const v=[];for(let i=0;i<n;i++){const x=S.days[ad(end,-i
 const tot=d=>{const all=day(d).meals||[],m=all.filter(x=>x.type!=='dinner'),r={dn:all.length-m.length};['kcal','p','f','c'].forEach(k=>{const v=m.filter(x=>x[k]!==''&&x[k]!=null).map(x=>+x[k]).filter(n=>!isNaN(n));r[k]=v.length?v.reduce((a,b)=>a+b):null});return r};
 const tm=s=>{const m=/^(\d+):(\d+)/.exec(s||'');return m?+m[1]*60+ +m[2]:null};
 function sleep(d){const x=day(d),b=tm(x.bed||'00:00'),wr=tm(x.wake),w=wr??tm(x.wt);if(w==null)return{t:'—'};let m=w-b;if(m<=0)m+=1440;if(m>960)return{t:'—',bad:1};return{h:m/60,t:(m/60).toFixed(1).replace('.0','')+'時間'+(wr==null?'（測定）':'')}}
-const alc=d=>{const x=day(d);return x.alc!==undefined?x.alc:(x.meals||[]).some(m=>m.type==='dinner'&&m.alc==='yes')};
+const ALV=['軽く','ほろ酔い','泥酔'],dinLv=d=>((day(d).meals||[]).find(m=>m.type==='dinner'&&ALV.includes(m.alc))||{}).alc||'';
+const alc=d=>{const x=day(d);return x.alc!==undefined?x.alc:(x.meals||[]).some(m=>m.type==='dinner'&&(m.alc==='yes'||ALV.includes(m.alc)))};
 const QS=[['千里の道も一歩から','老子『道徳経』'],['過ぎたるは猶及ばざるが如し','『論語』先進篇'],['天は自ら助くる者を助く','S・スマイルズ『自助論』']];
 function setD(v){if(v){D=v;render()}}
 function render(){GOAL=+S.set.goal>0?+S.set.goal:85;const opn=[...document.querySelectorAll('details[id]')].filter(d=>d.open).map(d=>d.id);needR=false;
@@ -114,13 +115,13 @@ function render(){GOAL=+S.set.goal>0?+S.set.goal:85;const opn=[...document.query
  // meals
  const ms=(x.meals||[]).slice().sort((a,b)=>(a.time?0:1)-(b.time?0:1)||(a.time||'').localeCompare(b.time||'')),t=tot(D),st=S.set;let mh='',last='#';
  ms.forEach(m=>{const h=m.time||'時刻不明';if(h!==last){mh+=`<div class="m" style="margin-top:6px"><b>${h}</b></div>`;last=h}
-  mh+=`<div class="row"><b>${E(m.name)||'（名称なし）'}</b>${m.type==='dinner'?' <span class="m">会食・集計外</span>':''}<span class="m">${m.kcal!==''&&m.kcal!=null?m.kcal+' kcal ':''}P${m.p||'—'} F${m.f||'—'} C${m.c||'—'}</span><span style="margin-left:auto"><button class="s" onclick="openM('${m.id}')">編集</button> <button class="s" onclick="delM('${m.id}')">削除</button></span>${(m.ph||[]).length?'<div style="width:100%">'+m.ph.map(u=>`<img src="${u}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;margin-right:4px">`).join('')+'</div>':''}${m.type!=='dinner'&&(m.p||m.f||m.c)?'<div style="width:100%">'+bal(m.p,m.f,m.c)+'</div>':''}${m.adv?`<div class="adv" style="width:100%">🏋️ ${E(m.adv)}</div>`:''}</div>`});
+  mh+=`<div class="row"><b>${E(m.name)||'（名称なし）'}</b>${m.type==='dinner'?` <span class="m">会食・集計外${ALV.includes(m.alc)?'・飲酒 '+m.alc:''}</span>`:''}<span class="m">${m.kcal!==''&&m.kcal!=null?m.kcal+' kcal ':''}P${m.p||'—'} F${m.f||'—'} C${m.c||'—'}</span><span style="margin-left:auto"><button class="s" onclick="openM('${m.id}')">編集</button> <button class="s" onclick="delM('${m.id}')">削除</button></span>${(m.ph||[]).length?'<div style="width:100%">'+m.ph.map(u=>`<img src="${u}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;margin-right:4px">`).join('')+'</div>':''}${m.type!=='dinner'&&(m.p||m.f||m.c)?'<div style="width:100%">'+bal(m.p,m.f,m.c)+'</div>':''}${m.adv?`<div class="adv" style="width:100%">🏋️ ${E(m.adv)}</div>`:''}</div>`});
   const gw=`<div class="gbw"><div class="m"><b>${t.dn?'1日の小計（会食を除く）／会食'+t.dn+'件':'1日の集計'}</b></div>${gbar('kcal',t.kcal,st.gkcal,' kcal')}${gbar('P',t.p,st.gp,' g')}${gbar('F',t.f,st.gf,' g')}${gbar('C',t.c,st.gc,' g')}${gleg('摂取','目標')}${st.gkcal||st.gp||st.gf||st.gc?'':'<div class="m">目標は「体重・体調・カロリー」の設定で入力できます。</div>'}</div>`;
  let sm=`<div style="margin-top:8px">${bal(t.p,t.f,t.c)}</div><button class="s" onclick="revT()">🏋️ トレーナーの総評 ${x.rev?(REVH[D]?'▾':'▴'):''}</button><div id="rev" class="adv" style="white-space:pre-wrap;${x.rev&&!REVH[D]?'':'display:none'}">${E(x.rev)}${x.rev?'<div style="margin-top:6px"><button class="s" onclick="dayRev()">🔄 今の食事内容で評価し直す</button></div>':''}</div>`;
  const a=alc(D);
  const sc=(x.sm?1:0)+(x.sn?1:0);
  $('#L').innerHTML=`<div class="card" id="meal"><h2>食事 <span class="m">${ms.length?ms.length+'件':'未記録'}</span></h2>${gw}<button onclick="openM()">＋ 食事を記録</button>${mh}${sm}</div>
- <div class="card" id="alc"><h2>飲酒 <span class="m">${x.alcLv||(a?'飲酒あり':'記録なし')}</span></h2><div class="row" style="border:0">${['軽く','ほろ酔い','泥酔'].map(c=>`<button class="${x.alcLv===c?'on':'s'}" onclick="alcL('${c}')">${x.alcLv===c?'✓ ':''}${c}</button>`).join('')}</div></div>
+ <div class="card" id="alc"><h2>飲酒 <span class="m">${x.alcLv||(dinLv(D)?dinLv(D)+'（会食）':a?'飲酒あり':'記録なし')}</span></h2><div class="row" style="border:0">${['軽く','ほろ酔い','泥酔'].map(c=>`<button class="${x.alcLv===c?'on':'s'}" onclick="alcL('${c}')">${x.alcLv===c?'✓ ':''}${c}</button>`).join('')}</div></div>
  <div class="card" id="sup"><h2>サプリ <span class="m">${sc} / 2 回</span></h2><label class="chk"><input type="checkbox" ${x.sm?'checked':''} onchange="tg('sm',this.checked)">朝のサプリ</label><label class="chk"><input type="checkbox" ${x.sn?'checked':''} onchange="tg('sn',this.checked)">夜のサプリ</label></div>
  <div class="card" id="wt">${wtCard()}</div>`;
  // right
@@ -177,7 +178,7 @@ function tdT(id){const i=S.todo[D].find(a=>a.id===id);i.d=!i.d;save();render()}
 function tdD(id){S.todo[D]=S.todo[D].filter(a=>a.id!==id);save();render()}
 // meal dialog
 function openM(id){MD=D;EID=id||null;const m=id?(day(D).meals||[]).find(a=>a.id===id):null,g=k=>m?.[k]??'';
- $('#m_type').value=m?m.type:'normal';$('#m_type').disabled=!!m;['name','kcal','p','f','c','memo','alc'].forEach(k=>$('#m_'+k).value=g(k));$('#m_time').value=m?(m.time||''):(D===jd()?jt():'');$('#m_err').textContent='';$('#m_st').textContent='';PH=(m?.ph||[]).map(th=>({th}));AN=m?.adv?{advice:m.adv,assume:m.as}:null;phR();md.showModal()}
+ $('#m_type').value=m?m.type:'normal';$('#m_type').disabled=!!m;{const o=$('#m_alc option[value="yes"]');if(g('alc')==='yes'&&!o)$('#m_alc').insertAdjacentHTML('beforeend','<option value="yes">飲酒あり（程度未記録）</option>');else if(g('alc')!=='yes'&&o)o.remove()}['name','kcal','p','f','c','memo','alc'].forEach(k=>$('#m_'+k).value=g(k));$('#m_time').value=m?(m.time||''):(D===jd()?jt():'');$('#m_err').textContent='';$('#m_st').textContent='';PH=(m?.ph||[]).map(th=>({th}));AN=m?.adv?{advice:m.adv,assume:m.as}:null;phR();md.showModal()}
 function preset(){const t=$('#m_type').value,P={pro:['プロテイン',20],yog:['ヨーグルト',10],chk:['茹でた胸肉',20]}[t];if(P){$('#m_name').value=P[0];$('#m_p').value=P[1]}}
 function saveM(){const old=(day(MD).meals||[]).find(z=>z.id===EID)||{};const v=k=>$('#m_'+k).value.trim(),t=v('type'),pr=['pro','yog','chk'].includes(t);const m={id:EID||'m'+Date.now(),type:pr?'normal':t,name:v('name'),time:v('time'),kcal:v('kcal'),p:v('p'),f:v('f'),c:v('c'),memo:v('memo'),alc:t==='dinner'?v('alc'):'',ph:PH.map(p=>p.th),adv:AN?AN.advice||'':old.adv||'',as:AN?AN.assume||'':old.as||''};
  if(m.type==='normal'&&!m.name&&!m.kcal&&!m.p&&!m.f&&!m.c){$('#m_err').textContent='メニュー名か栄養値を入力してください。';return}
