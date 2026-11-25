@@ -79,6 +79,7 @@ input,select,textarea{font-size:16px}
 </div>
 <dialog id="md"><h2 tabindex="-1" autofocus>食事を記録</h2>
 <div class="adv"><label>📷 食事の写真（最大5枚）<input type="file" accept="image/*" multiple onchange="addPh(this)"></label><div id="m_ph" class="row" style="border:0"></div><button class="s" onclick="analyze()">✨ 栄養を分析（推定し直す）</button><div class="m" id="m_st"></div><div id="m_an"></div></div>
+<div id="m_quick"></div>
 <label>種類<select id="m_type" onchange="preset()"><option value="normal">写真・手入力</option><option value="dinner">会食</option><option value="pro">プロテイン（P 20 g）</option><option value="yog">ヨーグルト（P 10 g）</option><option value="chk">茹でた胸肉（P 20 g）</option></select></label>
 <label>メニュー名<input id="m_name"></label>
 <div class="g2"><label>時刻<input type="time" id="m_time"></label><label>kcal<input type="number" id="m_kcal" min="0" inputmode="decimal"></label>
@@ -99,7 +100,7 @@ const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"]/g,c=>({'
 const jd=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Tokyo'}),jt=()=>new Date().toLocaleTimeString('en-GB',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'});
 const ad=(s,n)=>{const d=new Date(s+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const df=(a,b)=>Math.round((new Date(a)-new Date(b))/864e5),f1=(n,d=2)=>n==null?'—':(+n).toFixed(d);
-let S={days:{},set:{},todo:{}};try{S=Object.assign(S,JSON.parse(localStorage.getItem('dsm1')||'{}'))}catch(e){}
+let S={days:{},set:{},todo:{},fav:[]};try{S=Object.assign(S,JSON.parse(localStorage.getItem('dsm1')||'{}'))}catch(e){}
 let D=jd(),T0=D,msg='',MD=D,EID=null;let GOAL=85;
 const save=()=>{try{localStorage.setItem('dsm1',JSON.stringify(S));msg='';queueSync()}catch(e){msg='保存に失敗しました。容量などを確認してください。'}};
 const day=d=>S.days[d]||(S.days[d]={});
@@ -119,7 +120,7 @@ function render(){GOAL=+S.set.goal>0?+S.set.goal:85;const opn=[...document.query
  // meals
  const ms=(x.meals||[]).slice().sort((a,b)=>(a.time?0:1)-(b.time?0:1)||(a.time||'').localeCompare(b.time||'')),t=tot(D),st=S.set;let mh='',last='#';
  ms.forEach(m=>{const h=m.time||'時刻不明';if(h!==last){mh+=`<div class="m" style="margin-top:6px"><b>${h}</b></div>`;last=h}
-  mh+=`<div class="row"><b>${E(m.name)||'（名称なし）'}</b>${m.type==='dinner'?` <span class="m">会食・集計外${ALV.includes(m.alc)?'・飲酒 '+m.alc:''}</span>`:''}<span class="m">${m.kcal!==''&&m.kcal!=null?m.kcal+' kcal ':''}P${m.p||'—'} F${m.f||'—'} C${m.c||'—'}</span><span style="margin-left:auto"><button class="s" onclick="openM('${m.id}')">編集</button> <button class="s" onclick="delM('${m.id}')">削除</button></span>${(m.ph||[]).length?'<div style="width:100%">'+m.ph.map(u=>`<img src="${u}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;margin-right:4px">`).join('')+'</div>':''}${m.type!=='dinner'&&(m.p||m.f||m.c)?'<div style="width:100%">'+bal(m.p,m.f,m.c)+'</div>':''}${m.adv?`<div class="adv" style="width:100%">🏋️ ${E(m.adv)}</div>`:''}</div>`});
+  mh+=`<div class="row"><b>${E(m.name)||'（名称なし）'}</b>${m.type==='dinner'?` <span class="m">会食・集計外${ALV.includes(m.alc)?'・飲酒 '+m.alc:''}</span>`:''}<span class="m">${m.kcal!==''&&m.kcal!=null?m.kcal+' kcal ':''}P${m.p||'—'} F${m.f||'—'} C${m.c||'—'}</span><span style="margin-left:auto">${m.type!=='dinner'&&m.name?`<button class="s" aria-label="お気に入り" onclick="favT('${m.id}')">${isFav(m.name)?'★':'☆'}</button> `:''}<button class="s" onclick="openM('${m.id}')">編集</button> <button class="s" onclick="delM('${m.id}')">削除</button></span>${(m.ph||[]).length?'<div style="width:100%">'+m.ph.map(u=>`<img src="${u}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;margin-right:4px">`).join('')+'</div>':''}${m.type!=='dinner'&&(m.p||m.f||m.c)?'<div style="width:100%">'+bal(m.p,m.f,m.c)+'</div>':''}${m.adv?`<div class="adv" style="width:100%">🏋️ ${E(m.adv)}</div>`:''}</div>`});
   const gw=`<div class="gbw"><div class="m"><b>${t.dn?'1日の小計（会食を除く）／会食'+t.dn+'件':'1日の集計'}</b></div>${gbar('kcal',t.kcal,st.gkcal,' kcal')}${gbar('P',t.p,st.gp,' g')}${gbar('F',t.f,st.gf,' g')}${gbar('C',t.c,st.gc,' g')}${gleg('摂取','目標')}${st.gkcal||st.gp||st.gf||st.gc?'':'<div class="m">目標は「体重・体調・カロリー」の設定で入力できます。</div>'}</div>`;
  let sm=`<div style="margin-top:8px">${bal(t.p,t.f,t.c)}</div><button class="s" onclick="revT()">🏋️ トレーナーの総評 ${x.rev?(REVH[D]?'▾':'▴'):''}</button><div id="rev" class="adv" style="white-space:pre-wrap;${x.rev&&!REVH[D]?'':'display:none'}">${E(x.rev)}${x.rev?'<div style="margin-top:6px"><button class="s" onclick="dayRev()">🔄 今の食事内容で評価し直す</button></div>':''}</div>`;
  const a=alc(D);
@@ -182,9 +183,19 @@ function tdT(id){const i=S.todo[D].find(a=>a.id===id);i.d=!i.d;save();render()}
 function tdD(id){S.todo[D]=S.todo[D].filter(a=>a.id!==id);save();render()}
 // meal dialog
 function openM(id){MD=D;EID=id||null;const m=id?(day(D).meals||[]).find(a=>a.id===id):null,g=k=>m?.[k]??'';
- $('#m_type').value=m?m.type:'normal';$('#m_type').disabled=!!m;{const o=$('#m_alc option[value="yes"]');if(g('alc')==='yes'&&!o)$('#m_alc').insertAdjacentHTML('beforeend','<option value="yes">飲酒あり（程度未記録）</option>');else if(g('alc')!=='yes'&&o)o.remove()}['name','kcal','p','f','c','memo','alc'].forEach(k=>$('#m_'+k).value=g(k));$('#m_time').value=m?(m.time||''):(D===jd()?jt():'');$('#m_err').textContent='';$('#m_st').textContent='';PH=(m?.ph||[]).map(th=>({th}));AN=m?.adv?{advice:m.adv,assume:m.as}:null;phR();md.showModal()}
+ $('#m_type').value=m?m.type:'normal';$('#m_type').disabled=!!m;{const o=$('#m_alc option[value="yes"]');if(g('alc')==='yes'&&!o)$('#m_alc').insertAdjacentHTML('beforeend','<option value="yes">飲酒あり（程度未記録）</option>');else if(g('alc')!=='yes'&&o)o.remove()}['name','kcal','p','f','c','memo','alc'].forEach(k=>$('#m_'+k).value=g(k));$('#m_time').value=m?(m.time||''):(D===jd()?jt():'');$('#m_err').textContent='';$('#m_st').textContent='';PH=(m?.ph||[]).map(th=>({th}));AN=m?.adv?{advice:m.adv,assume:m.as}:null;phR();quickR();md.showModal()}
+// よく食べる食事：お気に入り（★）→ 最近の食事（同じ名前は最新の1件）の順に最大10件
+function quickList(){const fav=(S.fav||[]).map(f=>Object.assign({fav:1},f)),seen=new Set(fav.map(f=>f.name)),rec=[];
+ Object.keys(S.days).sort().reverse().slice(0,60).forEach(d=>(S.days[d].meals||[]).slice().reverse().forEach(m=>{if(m.type==='normal'&&m.name&&m.kcal!==''&&m.kcal!=null&&!seen.has(m.name)){seen.add(m.name);rec.push(m)}}));
+ return[...fav,...rec].slice(0,10)}
+function quickR(){const el=$('#m_quick');if(EID){el.innerHTML='';return}const L=quickList();
+ el.innerHTML=L.length?`<div class="m" style="margin-top:8px"><b>よく食べる食事</b>（タップで数値を入力）</div><div style="display:flex;gap:6px;overflow-x:auto;padding:4px 0 6px;-webkit-overflow-scrolling:touch">${L.map((m,i)=>`<button class="s" style="flex:none;min-height:40px;white-space:nowrap" onclick="quickUse(${i})">${m.fav?'★ ':''}${E(m.name)} <span class="m">${E(m.kcal)}kcal</span></button>`).join('')}</div>`:''}
+function quickUse(i){const m=quickList()[i];if(!m)return;$('#m_type').value='normal';['name','kcal','p','f','c'].forEach(k=>$('#m_'+k).value=m[k]??'');$('#m_memo').value='';AN=null;phR();$('#m_st').textContent='「'+m.name+'」の前回の数値を入れました。量が違う場合は修正して保存してください。'}
+function favT(id){const m=(day(D).meals||[]).find(a=>a.id===id);if(!m||!m.name)return;S.fav=S.fav||[];const i=S.fav.findIndex(f=>f.name===m.name);
+ if(i>=0)S.fav.splice(i,1);else S.fav.push({name:m.name,kcal:m.kcal,p:m.p,f:m.f,c:m.c});save();render()}
+const isFav=n=>(S.fav||[]).some(f=>f.name===n);
 function preset(){const t=$('#m_type').value,P={pro:['プロテイン',20],yog:['ヨーグルト',10],chk:['茹でた胸肉',20]}[t];if(P){$('#m_name').value=P[0];$('#m_p').value=P[1]}}
-function saveM(){const old=(day(MD).meals||[]).find(z=>z.id===EID)||{};const v=k=>$('#m_'+k).value.trim(),t=v('type'),pr=['pro','yog','chk'].includes(t);const m={id:EID||'m'+Date.now(),type:pr?'normal':t,name:v('name'),time:v('time'),kcal:v('kcal'),p:v('p'),f:v('f'),c:v('c'),memo:v('memo'),alc:t==='dinner'?v('alc'):'',ph:PH.map(p=>p.th),adv:AN?AN.advice||'':old.adv||'',as:AN?AN.assume||'':old.as||''};
+function saveM(){const old=(day(MD).meals||[]).find(z=>z.id===EID)||{};const v=k=>$('#m_'+k).value.trim(),t=v('type'),pr=['pro','yog','chk'].includes(t);const m={id:EID||'m'+Date.now(),type:pr?'normal':t,name:v('name'),time:v('time'),kcal:v('kcal'),p:v('p'),f:v('f'),c:v('c'),memo:v('memo'),alc:t==='dinner'?v('alc'):'',ph:PH.map(p=>p.th),adv:AN?AN.advice||'':old.adv||'',as:AN?AN.assume||'':old.as||'',aid:AN&&AN.aid||old.aid||''};
  if(m.type==='normal'&&!m.name&&!m.kcal&&!m.p&&!m.f&&!m.c){$('#m_err').textContent='メニュー名か栄養値を入力してください。';return}
  const x=day(MD),a=x.meals=x.meals||[],i=a.findIndex(z=>z.id===m.id);i>=0?a[i]=m:a.push(m);save();md.close();render()}
 function delM(id){if(!confirm('この食事を削除しますか？'))return;const x=day(D);x.meals=x.meals.filter(m=>m.id!==id);save();render()}
@@ -279,7 +290,7 @@ const d2b=u=>{const[h,b]=u.split(','),m=atob(b),a=new Uint8Array(m.length);for(l
 const bal=(p,f,c)=>{p=+p||0;f=+f||0;c=+c||0;const k=[p*4,f*9,c*4],s=k[0]+k[1]+k[2];if(!s)return'';const r=k.map(v=>Math.round(v/s*100));return`<div class="pfc"><i style="width:${r[0]}%;background:#38bdf8"></i><i style="width:${r[1]}%;background:#fbbf24"></i><i style="width:${r[2]}%;background:#a78bfa"></i></div><div class="m">P ${p}g（${r[0]}%）／ F ${f}g（${r[1]}%）／ C ${c}g（${r[2]}%）<span style="opacity:.7"> ※エネルギー比</span></div>`};
 function shrink(f,M=1024){return new Promise(r=>{const i=new Image();i.onload=()=>{const mk=m=>{const k=Math.min(1,m/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext('2d').drawImage(i,0,0,c.width,c.height);return c};mk(M).toBlob(b=>r({blob:b,th:mk(160).toDataURL('image/jpeg',.6)}),'image/jpeg',.75)};i.src=URL.createObjectURL(f)})}
 async function addPh(inp){for(const f of[...inp.files]){if(PH.length>=5){$('#m_st').textContent='写真は最大5枚です。';break}PH.push(await shrink(f))}inp.value='';phR();if(PH.length)analyze()}
-function phR(){$('#m_ph').innerHTML=PH.map((p,i)=>`<span style="position:relative"><img src="${p.th}" style="width:64px;height:64px;object-fit:cover;border-radius:10px"><button class="s" style="position:absolute;top:-8px;right:-8px;min-height:26px;padding:0 8px;background:var(--c)" onclick="PH.splice(${i},1);phR()">×</button></span>`).join('');const a=AN;$('#m_an').innerHTML=a?`${a.name?`<b>${E(a.name)}</b>`:''}${a.p!=null?bal(a.p,a.f,a.c):''}${a.assume?`<div class="m">前提：${E(a.assume)}</div>`:''}${a.balance?`<div>${E(a.balance)}</div>`:''}${a.advice?`<div class="adv">🏋️ ${E(a.advice)}</div>`:''}${a.riceAsk?'<div class="row" style="border:0"><span class="m">ご飯の量：</span>'+[100,120,150].map(g=>`<button class="s" onclick="analyze(${g})">${g} g</button>`).join('')+'</div>':''}`:''}
+function phR(){$('#m_ph').innerHTML=PH.map((p,i)=>`<span style="position:relative"><img src="${p.th}" style="width:64px;height:64px;object-fit:cover;border-radius:10px"><button class="s" style="position:absolute;top:-8px;right:-8px;min-height:26px;padding:0 8px;background:var(--c)" onclick="PH.splice(${i},1);phR()">×</button></span>`).join('');const a=AN;$('#m_an').innerHTML=a?`${a.name?`<b>${E(a.name)}</b>`:''}${a.p!=null?bal(a.p,a.f,a.c):''}${a.assume?`<div class="m">前提：${E(a.assume)}</div>`:''}${a.balance?`<div>${E(a.balance)}</div>`:''}${a.advice?`<div class="adv">🏋️ ${E(a.advice)}</div>`:a.pending?'<div class="m">⏳ 評価・助言を取得中…</div>':''}${a.riceAsk?'<div class="row" style="border:0"><span class="m">ご飯の量：</span>'+[100,120,150].map(g=>`<button class="s" onclick="analyze(${g})">${g} g</button>`).join('')+'</div>':''}`:''}
 let ANB=false,ANQ=null;
 const elap=(el,msg)=>{const t0=Date.now(),f=()=>el.textContent=msg+'（'+Math.round((Date.now()-t0)/1000)+'秒）';f();return setInterval(f,1000)};
 // 分析中に写真が追加されたら、今の分析が終わってから1回だけやり直す
@@ -288,10 +299,24 @@ async function analyze(rice){if(ANB){ANQ=rice===undefined?null:rice;ANB='again';
 async function analyze0(rice){const s=await getSam(),st=$('#m_st');if(!s){st.textContent='AI機能を使うには、画面下の「アプリ設定」でAPIキーを設定してください。数値は手入力でも保存できます。';return}
  const nm=$('#m_name').value.trim(),memo=$('#m_memo').value.trim();if(!PH.length&&!nm){st.textContent='写真かメニュー名を入力してください。';return}
  const bl=PH.map(p=>p.blob||d2b(p.th));if(bl.length){const l=await s.limits().catch(()=>({}));if(!l.images){st.textContent='この環境では写真の分析ができません。手入力してください。';return}}
- const tk=elap(st,'⏳ 分析中…写真・入力は保持されます');
- const q=`あなたはプロのパーソナルトレーナー兼管理栄養士です。食事の写真（同じ料理の別角度は一品として扱う）とメニュー名から栄養を推定し、JSONのみ返してください。\n形式: {"name":"料理名","kcal":数値,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"assume":"量・調理法の推定前提(60字以内)","balance":"PFCバランスと量の評価(80字以内)","advice":"筋肉量を維持しながら減量(目標体重${GOAL}kg)を続けるための、プロトレーナー目線の具体的助言(120字以内)","riceAsk":ご飯が写り量が結果に大きく影響し量の指定がない場合のみtrue}\n条件: 普段のご飯は「もち麦入りご飯」として推定（種類の明記があればそれを優先）。ご飯の量: ${rice?rice+'g':'指定なし'}。メニュー名: ${nm||'なし'}。補足: ${memo||'なし'}（食べた量・残した量の補足があれば優先）。判別できない項目はnull。数値は推定値。`;
- try{const r=await s.json(q,bl.length?{images:bl,cache:false}:{cache:false});AN=r;if(!nm&&r.name)$('#m_name').value=r.name;['kcal','p','f','c'].forEach(k=>{if(r[k]!=null&&r[k]!=='')$('#m_'+k).value=Math.round(r[k]*10)/10});clearInterval(tk);st.textContent='推定が完了しました。内容を確認・修正して保存してください。'+(LASTM&&LASTM!==gmodel()?'（混雑・上限のため '+LASTM+' で分析）':'');phR()}
- catch(e){clearInterval(tk);st.textContent=e&&e.code==='rate_limited'?rlD(e)+'手入力でも保存できます。':e&&e.code==='not_granted'?'APIキーが無効か、権限がありません。「アプリ設定」を確認してください。手入力で保存できます。':'分析に失敗しました（'+(e&&e.status>=500?'Google側が混雑しています':errD(e))+'）。'+(AN?'下の推定結果は前回の分析のものです。':'')+'少しおいて「栄養を分析」で再試行するか、手入力・写真のみで保存できます。'}}
+ const tk=elap(st,'⏳ 数値を推定中…写真・入力は保持されます');
+ // 1段階目：数値だけを短く返させる（ここが待ち時間の中心）
+ const q=`あなたは管理栄養士です。食事の写真（同じ料理の別角度は一品として扱う）とメニュー名から栄養を推定し、JSONのみ返してください。\n形式: {"name":"料理名","kcal":数値,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"assume":"量・調理法の推定前提(50字以内)","riceAsk":ご飯が写り量が結果に大きく影響し量の指定がない場合のみtrue}\n条件: 普段のご飯は「もち麦入りご飯」として推定（種類の明記があればそれを優先）。ご飯の量: ${rice?rice+'g':'指定なし'}。メニュー名: ${nm||'なし'}。補足: ${memo||'なし'}（食べた量・残した量の補足があれば優先）。判別できない項目はnull。数値は推定値。`;
+ let r;try{r=await s.json(q,bl.length?{images:bl}:{})}
+ catch(e){clearInterval(tk);st.textContent=e&&e.code==='rate_limited'?rlD(e)+'手入力でも保存できます。':e&&e.code==='not_granted'?'APIキーが無効か、権限がありません。「アプリ設定」を確認してください。手入力で保存できます。':'分析に失敗しました（'+(e&&e.status>=500?'Google側が混雑しています':errD(e))+'）。'+(AN?'下の推定結果は前回の分析のものです。':'')+'少しおいて「栄養を分析」で再試行するか、手入力・写真のみで保存できます。';return}
+ clearInterval(tk);const aid='a'+Date.now();AN=Object.assign(r,{aid,pending:true});
+ if(!nm&&r.name)$('#m_name').value=r.name;['kcal','p','f','c'].forEach(k=>{if(r[k]!=null&&r[k]!=='')$('#m_'+k).value=Math.round(r[k]*10)/10});
+ const note=LASTM&&LASTM!==gmodel()?'（混雑・上限のため '+LASTM+' で分析）':'';
+ st.textContent='数値の推定が完了しました。確認・修正して保存できます（評価・助言は取得中で、保存後に届いても反映されます）。'+note;phR();
+ adviceFor(r,aid,st,note)}
+// 2段階目：数値をもとに評価・助言を取得（写真は送らないので軽い）。保存済みなら、その食事に反映する
+async function adviceFor(r,aid,st,note){const s=await getSam();if(!s)return;
+ const q=`あなたはプロのパーソナルトレーナー兼管理栄養士です。利用者は筋肉量を維持しながら減量中（目標体重${GOAL}kg）です。次の1食を評価し、JSONのみ返してください。\n食事: ${r.name||'不明'}／${r.kcal??'?'}kcal／P${r.p??'?'}g F${r.f??'?'}g C${r.c??'?'}g（前提: ${r.assume||'なし'}）\n形式: {"balance":"PFCバランスと量の評価(80字以内)","advice":"プロトレーナー目線の具体的助言(120字以内)"}`;
+ let v=null;try{v=await s.json(q,{})}catch(e){}
+ const cur=AN&&AN.aid===aid;
+ if(cur){AN.pending=false;if(v){AN.balance=v.balance;AN.advice=v.advice}if(md.open){phR();if(st&&/取得中/.test(st.textContent))st.textContent=(v?'推定が完了しました。内容を確認・修正して保存してください。':'数値の推定は完了しました（評価・助言は取得できませんでした）。')+note}}
+ if(!v)return;let hit=false;
+ Object.values(S.days).forEach(d=>(d.meals||[]).forEach(m=>{if(m.aid===aid){m.adv=v.advice||'';hit=true}}));if(hit){save();render()}}
 const REVH={};
 function revT(){const x=day(D);if(!x.rev){dayRev();return}REVH[D]=!REVH[D];render()}
 async function dayRev(){REVH[D]=false;const s=await getSam(),x=day(D),t=tot(D);if(!s){alert('AI機能を使うには、画面下の「アプリ設定」でAPIキーを設定してください。');return}
