@@ -243,9 +243,9 @@ function fastModels(){let ms=[];try{ms=JSON.parse(LS('dsm_gmodels')||'[]').map(m
  const ver=id=>{const v=/gemini-(\d+(?:\.\d+)?)/.exec(id);return v?+v[1]:0};
  const lite=ms.filter(id=>/flash-lite/.test(id)&&!/(preview|exp)/.test(id)).sort((a,b)=>ver(b)-ver(a))[0]||'gemini-2.5-flash-lite';
  return[...new Set([lite,gmodel()])]}
-function altModels(cur){let ms=[];try{ms=JSON.parse(LS('dsm_gmodels')||'[]').map(m=>m.id)}catch(e){}if(!ms.includes(GDEF))ms.push(GDEF);
+function altModels(cur,n=2){let ms=[];try{ms=JSON.parse(LS('dsm_gmodels')||'[]').map(m=>m.id)}catch(e){}if(!ms.includes(GDEF))ms.push(GDEF);
  const ver=id=>{const v=/gemini-(\d+(?:\.\d+)?)/.exec(id);return v?+v[1]:0};
- return ms.filter(id=>id!==cur&&/flash/.test(id)&&!/(preview|exp)/.test(id)).sort((a,b)=>(/lite/.test(a)-/lite/.test(b))||ver(b)-ver(a)).slice(0,2)}
+ return ms.filter(id=>id!==cur&&/flash/.test(id)&&!/(preview|exp)/.test(id)).sort((a,b)=>(/lite/.test(a)-/lite/.test(b))||ver(b)-ver(a)).slice(0,n)}
 const tcfg=m=>NOTHINK[m]?null:/gemini-2\.5-flash/.test(m)?{thinkingBudget:0}:/gemini-([3-9]|\d{2})/.test(m)?{thinkingLevel:'low'}:null;
 const rlD=e=>{const m=String(e&&e.message||''),d=JSON.stringify(e&&e.details||[]),w=/"retryDelay":"(\d+)/.exec(d);
  const day=/per ?day|PerDay|daily/i.test(m+d),min=/per ?minute|PerMinute/i.test(m+d);
@@ -255,7 +255,7 @@ const getSam=async()=>{if(sam!==null)return sam;const key=LS('dsm_gkey');if(!key
  const call=async(q,o={},json=false)=>{const parts=[];for(const b of o.images||[])parts.push({inlineData:{mimeType:b.type||'image/jpeg',data:await b64(b)}});parts.push({text:q});
   const attempt=async(mdl,sig,tmo)=>{const path='models/'+encodeURIComponent(mdl)+':generateContent',body={contents:[{role:'user',parts}],generationConfig:{}};if(json)body.generationConfig.responseMimeType='application/json';
    const tc=tcfg(mdl);if(tc)body.generationConfig.thinkingConfig=tc;
-   const go=()=>o.fast?gfetch1(path,key,body,15000,sig):o.race?gfetch1(path,key,body,tmo,sig):gfetch(path,key,body);
+   const go=()=>o.fast?gfetch1(path,key,body,15000,sig):(o.race||o.seq)?gfetch1(path,key,body,tmo,sig):gfetch(path,key,body);
    let r;try{r=await go()}catch(e){if(!(tc&&e.status===400&&/think/i.test(e.message)))throw e;NOTHINK[mdl]=1;delete body.generationConfig.thinkingConfig;r=await go()}
    const c=r&&r.candidates&&r.candidates[0],text=((c&&c.content&&c.content.parts)||[]).filter(p=>!p.thought&&p.text).map(p=>p.text).join('');
    if(!text){const x=new Error((r&&r.promptFeedback&&r.promptFeedback.blockReason)||(c&&c.finishReason)||'empty');x.code='refusal';throw x}
@@ -271,6 +271,9 @@ const getSam=async()=>{if(sam!==null)return sam;const key=LS('dsm_gkey');if(!key
     const errs=(ag&&ag.errors)||[ag];let err=errs.find(e=>e&&!soft(e))||errs[0];if(!soft(err))throw err;
     for(const m of rest){try{const t=await attempt(m,o.signal,30000);LASTM=m;return{text:t}}catch(e){err=e;if(e.code==='cancelled'||!soft(e))throw e}}throw err}
    finally{if(o.signal)o.signal.removeEventListener('abort',stopAll)}}
+  if(o.seq){// 無料枠の節約：1つずつ送り、失敗したときだけ次のモデル（上限はモデルごとのため、軽量版も候補に入れる）
+   const ms=[gmodel(),...altModels(gmodel(),4)];let err;
+   for(const m of ms){try{const t=await attempt(m,o.signal,25000);LASTM=m;return{text:t}}catch(e){err=e;if(e.code==='cancelled'||!soft(e))throw e}}throw err}
   const ms=o.fast?fastModels():[gmodel(),...altModels(gmodel())];let err;
   for(const m of ms){try{const t=await attempt(m,o.signal,15000);LASTM=m;return{text:t}}catch(e){err=e;if(!(e.status>=500||e.status===429||(o.fast&&(e.code==='timeout'||e.code==='no_model'))))throw e}}
   throw err};
@@ -300,7 +303,7 @@ const d2b=u=>{const[h,b]=u.split(','),m=atob(b),a=new Uint8Array(m.length);for(l
 const bal=(p,f,c)=>{p=+p||0;f=+f||0;c=+c||0;const k=[p*4,f*9,c*4],s=k[0]+k[1]+k[2];if(!s)return'';const r=k.map(v=>Math.round(v/s*100));return`<div class="pfc"><i style="width:${r[0]}%;background:#38bdf8"></i><i style="width:${r[1]}%;background:#fbbf24"></i><i style="width:${r[2]}%;background:#a78bfa"></i></div><div class="m">P ${p}g（${r[0]}%）／ F ${f}g（${r[1]}%）／ C ${c}g（${r[2]}%）<span style="opacity:.7"> ※エネルギー比</span></div>`};
 function shrink(f,M=1024){return new Promise(r=>{const i=new Image();i.onload=()=>{const mk=m=>{const k=Math.min(1,m/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext('2d').drawImage(i,0,0,c.width,c.height);return c};mk(M).toBlob(b=>r({blob:b,th:mk(160).toDataURL('image/jpeg',.6)}),'image/jpeg',.75)};i.src=URL.createObjectURL(f)})}
 async function addPh(inp){for(const f of[...inp.files]){if(PH.length>=5){$('#m_st').textContent='写真は最大5枚です。';break}PH.push(await shrink(f,768))}inp.value='';phR();if(PH.length)analyze()}
-function phR(){$('#m_ph').innerHTML=PH.map((p,i)=>`<span style="position:relative"><img src="${p.th}" style="width:64px;height:64px;object-fit:cover;border-radius:10px"><button class="s" style="position:absolute;top:-8px;right:-8px;min-height:26px;padding:0 8px;background:var(--c)" onclick="PH.splice(${i},1);phR()">×</button></span>`).join('');const a=AN;$('#m_an').innerHTML=a?`${a.name?`<b>${E(a.name)}</b>`:''}${a.p!=null?bal(a.p,a.f,a.c):''}${a.assume?`<div class="m">前提：${E(a.assume)}</div>`:''}${a.balance?`<div>${E(a.balance)}</div>`:''}${a.advice?`<div class="adv">🏋️ ${E(a.advice)}</div>`:a.pending?'<div class="m">⏳ 評価・助言を取得中…</div>':''}${a.riceAsk?'<div class="row" style="border:0"><span class="m">ご飯の量：</span>'+[100,120,150].map(g=>`<button class="s" onclick="analyze(${g})">${g} g</button>`).join('')+'</div>':''}`:''}
+function phR(){$('#m_ph').innerHTML=PH.map((p,i)=>`<span style="position:relative"><img src="${p.th}" style="width:64px;height:64px;object-fit:cover;border-radius:10px"><button class="s" style="position:absolute;top:-8px;right:-8px;min-height:26px;padding:0 8px;background:var(--c)" onclick="PH.splice(${i},1);phR()">×</button></span>`).join('');const a=AN;$('#m_an').innerHTML=a?`${a.name?`<b>${E(a.name)}</b>`:''}${a.p!=null?bal(a.p,a.f,a.c):''}${a.assume?`<div class="m">前提：${E(a.assume)}</div>`:''}${a.balance?`<div>${E(a.balance)}</div>`:''}${a.advice?`<div class="adv">🏋️ ${E(a.advice)}</div>`:a.pending?'<div class="m">⏳ 評価・助言を取得中…</div>':a.aid?'<button class="s" style="margin-top:6px" onclick="advNow()">🏋️ 評価・助言を見る</button>':''}${a.riceAsk?'<div class="row" style="border:0"><span class="m">ご飯の量：</span>'+[100,120,150].map(g=>`<button class="s" onclick="analyze(${g})">${g} g</button>`).join('')+'</div>':''}`:''}
 const elap=(el,msg)=>{const t0=Date.now(),f=()=>el.textContent=msg+'（'+Math.round((Date.now()-t0)/1000)+'秒）';f();return setInterval(f,1000)};
 // 新しい分析を始めたら、実行中の古い分析は中止する（画面には最新の分析結果だけを出す）
 let ANC=null,ANSEQ=0;
@@ -311,19 +314,20 @@ async function analyze0(rice,sig,seq){const s=await getSam(),st=$('#m_st');if(!s
  AN=null;phR();const tk=elap(st,'⏳ 数値を推定中…写真・入力は保持されます');
  // 1段階目：数値だけを短く返させる（ここが待ち時間の中心）
  const q=`あなたは管理栄養士です。食事の写真（同じ料理の別角度は一品として扱う）とメニュー名から栄養を推定し、JSONのみ返してください。\n形式: {"name":"料理名","kcal":数値,"p":たんぱく質g,"f":脂質g,"c":炭水化物g,"assume":"量・調理法の推定前提(50字以内)","riceAsk":ご飯が写り量が結果に大きく影響し量の指定がない場合のみtrue}\n条件: 普段のご飯は「もち麦入りご飯」として推定（種類の明記があればそれを優先）。ご飯の量: ${rice?rice+'g':'指定なし'}。メニュー名: ${nm||'なし'}。メモ: ${memo||'なし'}。\nメモがある場合は最優先で数値に反映すること（食べた量・残した量・食材・調理法・ご飯の量・追加/除外したものなど。写真と食い違う場合はメモを優先）。判別できない項目はnull。数値は推定値。`;
- let r;try{r=await s.json(q,bl.length?{images:bl,race:true,signal:sig}:{race:true,signal:sig})}
+ let r;try{r=await s.json(q,bl.length?{images:bl,seq:true,signal:sig}:{seq:true,signal:sig})}
  catch(e){clearInterval(tk);if(seq!==ANSEQ||(e&&e.code==='cancelled'))return;st.textContent=e&&e.code==='rate_limited'?rlD(e)+'手入力でも保存できます。':e&&e.code==='not_granted'?'APIキーが無効か、権限がありません。「アプリ設定」を確認してください。手入力で保存できます。':'分析に失敗しました（'+(e&&e.status>=500?'Google側が混雑しています':errD(e))+'）。'+'少しおいて「栄養を分析」で再試行するか、手入力・写真のみで保存できます。';return}
  clearInterval(tk);if(seq!==ANSEQ)return;const aid='a'+Date.now();AN=Object.assign(r,{aid,pending:true,memo});
  if(!nm&&r.name)$('#m_name').value=r.name;['kcal','p','f','c'].forEach(k=>{if(r[k]!=null&&r[k]!=='')$('#m_'+k).value=Math.round(r[k]*10)/10});
- const note=LASTM&&LASTM!==gmodel()?'（先に応答した '+LASTM+' の結果）':'';
- st.textContent='数値の推定が完了しました。確認・修正して保存できます（評価・助言は取得中で、保存後に届いても反映されます）。'+note;phR();
- adviceFor(r,aid,st,note)}
+ const note=LASTM&&LASTM!==gmodel()?'（'+LASTM+' で分析）':'';
+ st.textContent='推定が完了しました。内容を確認・修正して保存してください。'+note;
+ AN.pending=false;AN.note=note;phR()}
 // 2段階目：数値をもとに評価・助言を取得（写真は送らないので軽い）。保存済みなら、その食事に反映する
+function advNow(){if(!AN||!AN.aid)return;AN.pending=true;phR();adviceFor(AN,AN.aid,$('#m_st'),AN.note||'')}
 async function adviceFor(r,aid,st,note){const s=await getSam();if(!s)return;
  const q=`あなたはプロのパーソナルトレーナー兼管理栄養士です。利用者は筋肉量を維持しながら減量中（目標体重${GOAL}kg）です。次の1食を評価し、JSONのみ返してください。\n食事: ${r.name||'不明'}／${r.kcal??'?'}kcal／P${r.p??'?'}g F${r.f??'?'}g C${r.c??'?'}g（前提: ${r.assume||'なし'}／メモ: ${r.memo||'なし'}）\n形式: {"balance":"PFCバランスと量の評価(80字以内)","advice":"プロトレーナー目線の具体的助言(120字以内)"}`;
  let v=null;try{v=await s.json(q,{})}catch(e){}
  const cur=AN&&AN.aid===aid;
- if(cur){AN.pending=false;if(v){AN.balance=v.balance;AN.advice=v.advice}if(md.open){phR();if(st&&/取得中/.test(st.textContent))st.textContent=(v?'推定が完了しました。内容を確認・修正して保存してください。':'数値の推定は完了しました（評価・助言は取得できませんでした）。')+note}}
+ if(cur){AN.pending=false;if(v){AN.balance=v.balance;AN.advice=v.advice}if(md.open){phR();if(st&&!v)st.textContent=(v?'推定が完了しました。内容を確認・修正して保存してください。':'数値の推定は完了しました（評価・助言は取得できませんでした）。')+note}}
  if(!v)return;let hit=false;
  Object.values(S.days).forEach(d=>(d.meals||[]).forEach(m=>{if(m.aid===aid){m.adv=v.advice||'';hit=true}}));if(hit){save();render()}}
 const REVH={};
@@ -354,7 +358,7 @@ async function readW(inp){const f=inp.files[0];inp.value='';if(!f)return;const s
  clearInterval(tk);st.textContent='読み取り完了。画面の数値と見比べて確認・修正してから保存してください。'+(miss.length?' 読めなかった項目：'+miss.join('、'):'')}
  catch(e){clearInterval(tk);st.textContent=e&&e.code==='rate_limited'?rlD(e)+'手入力でも保存できます。':e&&e.code==='not_granted'?'APIキーが無効か、権限がありません。「アプリ設定」を確認してください。手入力で保存できます。':'読み取りに失敗しました（'+(e&&e.status>=500?'Google側が混雑しています':errD(e))+'）。再試行するか、手入力してください。'}}
 const md=$('#md'),wd=$('#wd'),rd=$('#rd');
-$('#m_memo').addEventListener('change',()=>{if(md.open&&(PH.length||AN))analyze()});
+$('#m_memo').addEventListener('change',()=>{if(md.open&&AN&&AN.aid)$('#m_st').textContent='メモを数値に反映するには「✨ 栄養を分析」を押してください。'});
 md.addEventListener('close',()=>{if(!md.open&&ANC){ANC.abort();ANC=null}});
 function tick(){const n=jd();if(n!==T0){if(D===T0)D=n;T0=n;render()}}
 document.addEventListener('visibilitychange',tick);addEventListener('focus',tick);setInterval(tick,30000);
