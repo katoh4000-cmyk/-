@@ -169,9 +169,9 @@ let needR=false;
 const ss=(k,v)=>{S.set[k]=v;save();GOAL=+S.set.goal>0?+S.set.goal:85;needR=true;const c=$('#calTxt');if(c)c.innerHTML=calT().h;topR()};
 function topR(){const lw=lastW(D),t=$('#top .big'),m=$('#top .big+br+.m');if(!lw||!t||!m)return;const d=S.days[lw].w-GOAL;t.textContent=d>0?'あと '+f1(d)+' kg':d===0?'目標達成':'目標より '+f1(-d)+' kg下';m.textContent=`${lw}の体重 ${f1(S.days[lw].w)} kg ／ 目標 ${GOAL} kg`}
 // training
-const PARTS=['脚・お尻','胸','背中','肩','腕','ゴルフ'];
+const PARTS=['脚・お尻','胸','背中','肩','腕','有酸素','ゴルフ'];
 function trn(){const x=day(D),tr=x.train||[],ex=[ad(D,-1),ad(D,-2)].flatMap(d=>(S.days[d]?.train||[]).filter(t=>t.done).map(t=>t.p)),ls=p=>{for(let i=1;i<60;i++)if((S.days[ad(D,-i)]?.train||[]).some(t=>t.p===p&&t.done))return i;return 99};
- const sg=PARTS.filter(p=>!ex.includes(p)&&!tr.some(t=>t.p===p)).sort((a,b)=>ls(b)-ls(a));
+ const sg=PARTS.filter(p=>(p==='有酸素'||!ex.includes(p))&&!tr.some(t=>t.p===p)).sort((a,b)=>ls(b)-ls(a));
  return`<h2>筋トレ <span class="m">1回30分が目安</span></h2><div class="m">おすすめ（前日・前々日の部位を除外）</div><div class="row" style="border:0">${sg.map(p=>`<button class="s" onclick="trA('${p}')">${p}</button>`).join('')||'<span class="m">候補なし</span>'}</div>
  ${tr.map((t,i)=>`<div class="row"><label class="chk" style="flex:1"><input type="checkbox" ${t.done?'checked':''} onchange="trT(${i})">${t.p} <span class="m">${t.done?'完了':'予定'}</span></label><button class="s" onclick="trD(${i})">削除</button></div>`).join('')}`}
 function trA(p){const x=day(D);(x.train=x.train||[]).push({p,done:false});save();render()}
