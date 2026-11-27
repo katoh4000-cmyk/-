@@ -7,13 +7,15 @@
 const TOKEN = 'ここにアプリで作成した合言葉を貼り付け';
 const FOLDER_NAME = '毎日の自己管理';
 const FILE_NAME = '毎日の自己管理_記録.json';
+// 保存先フォルダのID（フォルダURLの /folders/ の後ろの文字列）。空欄ならマイドライブ直下の FOLDER_NAME を使う
+const FOLDER_ID = '';
 
 function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
     if (!TOKEN || TOKEN.indexOf('ここに') === 0 || body.token !== TOKEN) return out_({ ok: false, error: 'bad token' });
     const json = JSON.stringify({ app: body.app, version: body.version, sentAt: body.sentAt, savedAt: new Date().toISOString(), data: body.data }, null, 1);
-    const folder = folder_(DriveApp.getRootFolder(), FOLDER_NAME);
+    const folder = FOLDER_ID ? DriveApp.getFolderById(FOLDER_ID) : folder_(DriveApp.getRootFolder(), FOLDER_NAME);
     upsert_(folder, FILE_NAME, json);
     const day = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd');
     upsert_(folder_(folder, '履歴'), '記録_' + day + '.json', json);
