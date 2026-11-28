@@ -111,10 +111,21 @@ const tm=s=>{const m=/^(\d+):(\d+)/.exec(s||'');return m?+m[1]*60+ +m[2]:null};
 function sleep(d){const x=day(d),b=tm(x.bed||'00:00'),wr=tm(x.wake),w=wr??tm(x.wt);if(w==null)return{t:'—'};let m=w-b;if(m<=0)m+=1440;if(m>960)return{t:'—',bad:1};return{h:m/60,t:(m/60).toFixed(1).replace('.0','')+'時間'+(wr==null?'（測定）':'')}}
 const ALV=['軽く','ほろ酔い','泥酔'],dinLv=d=>((day(d).meals||[]).find(m=>m.type==='dinner'&&ALV.includes(m.alc))||{}).alc||'';
 const alc=d=>{const x=day(d);return x.alc!==undefined?x.alc:(x.meals||[]).some(m=>m.type==='dinner'&&(m.alc==='yes'||ALV.includes(m.alc)))};
-const QS=[['千里の道も一歩から','老子『道徳経』'],['過ぎたるは猶及ばざるが如し','『論語』先進篇'],['天は自ら助くる者を助く','S・スマイルズ『自助論』']];
+const QS=[['ハングリーであれ。愚かであれ。','スティーブ・ジョブズ（2005年 スタンフォード大学卒業式スピーチ）'],
+['何をしないかを決めるのは、何をするかを決めるのと同じくらい大事だ。','スティーブ・ジョブズ'],
+['小さいことを積み重ねるのが、とんでもないところへ行くただひとつの道だと思っています。','イチロー'],
+['天才とは1％のひらめきと99％の努力である。','トーマス・エジソン'],
+['人生は自転車に乗るようなものだ。バランスを保つには走り続けなければならない。','アルベルト・アインシュタイン'],
+['打たないシュートは100％外れる。','ウェイン・グレツキー'],
+['やってみなはれ。','鳥井信治郎（サントリー創業者）'],
+['やってみせ、言って聞かせて、させてみせ、ほめてやらねば、人は動かじ。','山本五十六'],
+['為せば成る 為さねば成らぬ何事も 成らぬは人の為さぬなりけり','上杉鷹山'],
+['動機善なりや、私心なかりしか。','稲盛和夫'],
+['勝ちに不思議の勝ちあり、負けに不思議の負けなし。','野村克也（松浦静山の言葉を引用）'],
+['千里の道も一歩から。','老子']];
 function setD(v){if(v){D=v;render()}}
 function render(){GOAL=+S.set.goal>0?+S.set.goal:85;const opn=[...document.querySelectorAll('details[id]')].filter(d=>d.open).map(d=>d.id);needR=false;
- $('#dt').value=D;const lw=lastW(D),x=day(D),q=QS[Math.floor(new Date(T0+'T00:00:00Z')/864e5)%3];
+ $('#dt').value=D;const lw=lastW(D),x=day(D),q=QS[Math.floor(new Date(T0+'T00:00:00Z')/864e5)%QS.length];
  let g='体重の記録がありません。体重を記録しましょう。';if(lw){const d=S.days[lw].w-GOAL;g=`<span class="big">${d>0?'あと '+f1(d)+' kg':d===0?'目標達成':'目標より '+f1(-d)+' kg下'}</span><br><span class="m">${lw}の体重 ${f1(S.days[lw].w)} kg ／ 目標 ${GOAL} kg</span>`}
  prog();insR();$('#top').innerHTML=g+`<div class="quote"><div class="m">📜 今日の格言</div><div class="qt">${q[0]}</div><div class="m">— ${q[1]}</div></div>`;
  // meals
